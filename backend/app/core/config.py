@@ -107,10 +107,12 @@ class Settings(BaseSettings):
     MATCHING_DEFAULT_THRESHOLD: int = Field(default=75, ge=0, le=100)
 
     # --- IA (optionnelle) ---
-    AI_PROVIDER: Literal["none", "anthropic"] = "none"
+    AI_PROVIDER: Literal["none", "anthropic", "ollama"] = "none"
     AI_API_KEY: SecretStr | None = None
     AI_MODEL: str | None = None
     AI_TIMEOUT_SECONDS: float = 120.0
+    # Ollama (AI_PROVIDER=ollama) : serveur de modèles open source auto-hébergé.
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod

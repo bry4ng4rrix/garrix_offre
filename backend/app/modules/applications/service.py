@@ -79,7 +79,8 @@ class ApplicationService:
 
     # --- CRUD ---
 
-    def create(self, user: User, data: ApplicationCreate) -> Application:
+    def create(self, user: User, data: ApplicationCreate, *, automatic: bool = False) -> Application:
+        """Crée une candidature. `automatic` : créée par la candidature automatique."""
         if data.status not in rules.INITIAL_STATUSES:
             raise BusinessRuleError(
                 "A new application must start as not_applied or preparing",
@@ -106,6 +107,7 @@ class ApplicationService:
             cv_document_id=data.cv_document_id,
             notes=data.notes,
             follow_up_at=data.follow_up_at,
+            is_automatic=automatic,
         )
         try:
             self.applications.add(application)
@@ -115,9 +117,11 @@ class ApplicationService:
                 "You already have an active application for this job",
                 code="APPLICATION_ALREADY_EXISTS",
             ) from exc
+        actor = ActorType.SYSTEM if automatic else ActorType.USER
         self._record_history(
-            application, None, application.status, ActorType.USER, user.id, "Création"
-        )
+            application, None, application.status, actor, user.id,
+            "Création automatique" if automatic else "Création",
+        )  # fmt: skip
         self.session.commit()
         return application
 
@@ -216,8 +220,11 @@ class ApplicationService:
             application, target, actor_type=ActorType.USER, actor_id=user.id, note=note
         )
 
-    def prepare(self, user: User, application_id: uuid.UUID, data: PrepareRequest) -> Application:
+    def prepare(
+        self, user: User, application_id: uuid.UUID, data: PrepareRequest, *, automatic: bool = False
+    ) -> Application:
         """UML 12 : brouillons générés + CV choisi, puis statut READY (rien n'est envoyé)."""
+        actor = ActorType.SYSTEM if automatic else ActorType.USER
         application = self.get(user, application_id)
         if application.status not in {ApplicationStatus.NOT_APPLIED, ApplicationStatus.PREPARING}:
             raise BusinessRuleError(
@@ -257,7 +264,7 @@ class ApplicationService:
                 application,
                 ApplicationStatus.NOT_APPLIED,
                 ApplicationStatus.PREPARING,
-                ActorType.USER,
+                actor,
                 user.id,
                 None,
             )
@@ -267,12 +274,13 @@ class ApplicationService:
             application,
             previous,
             ApplicationStatus.READY,
-            ActorType.USER,
+            actor,
             user.id,
-            "Brouillons générés",
+            "Brouillons générés automatiquement" if automatic else "Brouillons générés",
         )
         self.session.commit()
-        self._notify_status(application)
+        if not automatic:  # la candidature automatique envoie un bilan unique
+            self._notify_status(application)
         return application
 
     def generate(
@@ -305,8 +313,14 @@ class ApplicationService:
             self.session.commit()
         return result
 
-    def submit(self, user: User, application_id: uuid.UUID, data: SubmitRequest) -> Application:
-        """Envoi validé explicitement par l'utilisateur (RG-10) : READY -> SUBMITTED."""
+    def submit(
+        self, user: User, application_id: uuid.UUID, data: SubmitRequest, *, automatic: bool = False
+    ) -> Application:
+        """Envoi validé explicitement par l'utilisateur (RG-10) : READY -> SUBMITTED.
+
+        `automatic` : envoi par la candidature automatique, que l'utilisateur a activée en mode
+        « envoyer » (son accord vaut confirmation pour les offres correspondant à ses critères).
+        """
         application = self.get(user, application_id)
         if not data.confirm:
             raise BusinessRuleError(
@@ -335,16 +349,19 @@ class ApplicationService:
         application.follow_up_at = application.follow_up_at or now + timedelta(
             days=rules.FOLLOW_UP_AFTER_DAYS
         )
+        actor = ActorType.SYSTEM if automatic else ActorType.USER
         self._record_history(
-            application, ApplicationStatus.READY, ApplicationStatus.SUBMITTED, ActorType.USER, user.id,
-            f"Envoi confirmé ({method.value})",
+            application, ApplicationStatus.READY, ApplicationStatus.SUBMITTED, actor, user.id,
+            f"Envoi automatique ({method.value})" if automatic else f"Envoi confirmé ({method.value})",
         )  # fmt: skip
         self.audit.record(
-            "application.submitted", actor_type=ActorType.USER, actor_id=user.id,
-            entity_type="application", entity_id=application.id, details={"method": method.value},
+            "application.submitted", actor_type=actor, actor_id=user.id,
+            entity_type="application", entity_id=application.id,
+            details={"method": method.value, "automatic": automatic},
         )  # fmt: skip
         self.session.commit()
-        self._notify_status(application)
+        if not automatic:
+            self._notify_status(application)
         return application
 
     def follow_ups_due(self) -> list[Application]:

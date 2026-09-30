@@ -10,6 +10,7 @@ Quand vous créez un nouveau `models.py`, ajoutez son import ici.
 from app.modules.applications.models import (
     Application,
     ApplicationStatusHistory,
+    AutoApplySettings,
     RecruiterResponse,
 )
 from app.modules.audit.models import AuditLog
@@ -34,6 +35,7 @@ from app.modules.users.models import User
 __all__ = [
     "Application",
     "ApplicationStatusHistory",
+    "AutoApplySettings",
     "AuditLog",
     "Company",
     "ContractType",

@@ -149,7 +149,7 @@ Toutes sont décrites dans [`.env.example`](.env.example). `make env` crée `.en
 | `SCRAPER_*`, `ALLOW_PRIVATE_SOURCE_URLS` | Collecte (User-Agent honnête, délais, protection SSRF) |
 | `FRANCE_TRAVAIL_CLIENT_ID/SECRET`, `SOURCE_*` | Clés des API d'offres (voir [Sources](#9-sources-doffres)) |
 | `MATCHING_*_WEIGHT`, `MATCHING_DEFAULT_THRESHOLD` | Poids et seuil par défaut du matching |
-| `AI_PROVIDER`, `AI_API_KEY`, `AI_MODEL` | IA optionnelle |
+| `AI_PROVIDER`, `AI_API_KEY`, `AI_MODEL`, `OLLAMA_BASE_URL`, `AI_TIMEOUT_SECONDS` | IA optionnelle (Claude ou Ollama) |
 | `API_PORT`, `N8N_PORT`, `POSTGRES_PORT`, `REDIS_PORT` | Ports publiés sur la machine (chaque service sur son port) |
 | `N8N_BIND_ADDRESS`, `N8N_PUBLIC_URL` | Production : n8n public (`0.0.0.0`) ou local (`127.0.0.1`), URL publique de n8n |
 
@@ -439,6 +439,12 @@ Activez l'email par utilisateur : `PUT /notifications/settings` (`email_enabled`
 - `AI_PROVIDER=anthropic` + `AI_API_KEY` : Claude via le SDK officiel (`AI_MODEL` vide =
   `claude-opus-5-5`), sorties JSON structurées, effort `low` pour l'analyse et `medium` pour la
   rédaction, bascule automatique sur un modèle de repli si un filtre refuse une requête légitime.
+- `AI_PROVIDER=ollama` : modèle open source sur votre propre serveur, aucune donnée envoyée à
+  l'extérieur, pas de clé (`AI_MODEL` vide = `qwen3:4b`). Depuis les conteneurs, l'hôte est
+  `OLLAMA_BASE_URL=http://host.docker.internal:11434` (Ollama doit écouter sur l'adresse du pont
+  Docker, par exemple `OLLAMA_HOST=172.17.0.1:11434`, ou sur `0.0.0.0` derrière un pare-feu).
+  Sans GPU, comptez 1 à 3 minutes par texte : mettez `AI_TIMEOUT_SECONDS=300`. Les emails et
+  lettres sont rédigés à partir de l'offre (intitulé, entreprise, description) et du profil.
 - En cas d'erreur du fournisseur, les règles prennent le relais (`generated_by: "rules"`).
 - Le **matching n'utilise jamais l'IA**. Les contenus externes sont transmis comme données,
   jamais comme instructions.

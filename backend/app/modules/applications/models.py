@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import ForeignKey, Index, String, Text, func, text
+from sqlalchemy import ForeignKey, Index, String, Text, UniqueConstraint, func, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base, TimestampMixin, UUIDPrimaryKeyMixin, enum_column
@@ -10,6 +10,8 @@ from app.modules.jobs.models import Job
 from app.shared.enums import (
     ActorType,
     ApplicationStatus,
+    AutoApplyMode,
+    SourceCategory,
     RecruiterResponseType,
     SubmissionMethod,
 )
@@ -57,6 +59,8 @@ class Application(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     email_subject: Mapped[str | None] = mapped_column(String(255))
     email_body: Mapped[str | None] = mapped_column(Text)
     notes: Mapped[str | None] = mapped_column(Text)
+    # Créée par la candidature automatique (et non à la main).
+    is_automatic: Mapped[bool] = mapped_column(default=False, server_default=text("false"))
     submitted_at: Mapped[datetime | None]
     submission_method: Mapped[SubmissionMethod | None] = mapped_column(
         enum_column(SubmissionMethod)
@@ -116,3 +120,34 @@ class RecruiterResponse(UUIDPrimaryKeyMixin, Base):
     analysis: Mapped[dict[str, Any]] = mapped_column(default=dict)
     is_read: Mapped[bool] = mapped_column(default=False)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+
+
+class AutoApplySettings(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    """Réglages de la candidature automatique d'un utilisateur (désactivée par défaut).
+
+    Activer le mode `send` vaut accord explicite pour que les candidatures correspondant à ces
+    critères soient envoyées sans validation une par une (dérogation voulue à RG-10).
+    """
+
+    __tablename__ = "auto_apply_settings"
+    __table_args__ = (UniqueConstraint("user_id"),)
+
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    enabled: Mapped[bool] = mapped_column(default=False)
+    mode: Mapped[AutoApplyMode] = mapped_column(
+        enum_column(AutoApplyMode), default=AutoApplyMode.SEND
+    )
+    min_score: Mapped[int] = mapped_column(default=80)
+    daily_limit: Mapped[int] = mapped_column(default=10)
+    # Catégories de sources visées (par défaut : offres d'emploi, pas les missions freelance).
+    categories: Mapped[list[str]] = mapped_column(
+        default=lambda: [SourceCategory.JOBS.value, SourceCategory.SERVICES.value]
+    )
+    countries: Mapped[list[str]] = mapped_column(default=list)
+    remote_only: Mapped[bool] = mapped_column(default=False)
+    excluded_keywords: Mapped[list[str]] = mapped_column(default=list)
+    max_job_age_days: Mapped[int] = mapped_column(default=14)
+    cv_document_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("documents.id", ondelete="SET NULL")
+    )
+    last_run_at: Mapped[datetime | None]

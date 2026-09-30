@@ -150,6 +150,13 @@ class ApplicationStatus(StrEnum):
     WITHDRAWN = "withdrawn"
 
 
+class AutoApplyMode(StrEnum):
+    """Candidature automatique : préparer seulement (l'utilisateur valide) ou envoyer."""
+
+    PREPARE = "prepare"
+    SEND = "send"
+
+
 class SubmissionMethod(StrEnum):
     EMAIL = "email"
     WEBSITE = "website"

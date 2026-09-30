@@ -8,7 +8,9 @@ from app.modules.ai.schemas import GenerationKind
 from app.shared.enums import (
     ActorType,
     ApplicationStatus,
+    AutoApplyMode,
     RecruiterResponseType,
+    SourceCategory,
     SubmissionMethod,
 )
 from app.shared.schemas import ORMModel
@@ -40,6 +42,7 @@ class ApplicationRead(ORMModel):
     follow_up_at: datetime | None
     last_contact_at: datetime | None
     response_received_at: datetime | None
+    is_automatic: bool = False
     job: ApplicationJobInfo | None
     created_at: datetime
     updated_at: datetime
@@ -179,3 +182,95 @@ class FollowUpDue(BaseModel):
     company_name: str | None
     submitted_at: datetime | None
     follow_up_at: datetime | None
+
+
+# --- Candidature automatique ---
+
+DEFAULT_AUTO_CATEGORIES = [SourceCategory.JOBS, SourceCategory.SERVICES]
+
+
+class AutoApplySettingsRead(ORMModel):
+    enabled: bool
+    mode: AutoApplyMode
+    min_score: int
+    daily_limit: int
+    categories: list[SourceCategory]
+    countries: list[str]
+    remote_only: bool
+    excluded_keywords: list[str]
+    max_job_age_days: int
+    cv_document_id: uuid.UUID | None
+    last_run_at: datetime | None
+
+
+class AutoApplySettingsUpdate(BaseModel):
+    """Champs absents = inchangés."""
+
+    enabled: bool | None = None
+    mode: AutoApplyMode | None = Field(
+        default=None,
+        description="prepare : candidatures prêtes, validées une par une ; send : envoyées "
+        "automatiquement par email (offres avec une adresse de candidature)",
+    )
+    min_score: int | None = Field(default=None, ge=50, le=100)
+    daily_limit: int | None = Field(default=None, ge=1, le=50)
+    categories: list[SourceCategory] | None = Field(default=None, min_length=1)
+    countries: list[str] | None = Field(default=None, max_length=50)
+    remote_only: bool | None = None
+    excluded_keywords: list[str] | None = Field(default=None, max_length=50)
+    max_job_age_days: int | None = Field(default=None, ge=1, le=90)
+    cv_document_id: uuid.UUID | None = None
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {"enabled": True, "mode": "send", "min_score": 85, "daily_limit": 5,
+                 "categories": ["jobs", "services"], "excluded_keywords": ["stage"]}
+            ]
+        }
+    )  # fmt: skip
+
+    @model_validator(mode="after")
+    def clean_lists(self) -> "AutoApplySettingsUpdate":
+        def clean(values: list[str] | None) -> list[str] | None:
+            if values is None:
+                return None
+            seen: dict[str, str] = {}
+            for value in values:
+                text = value.strip()[:100]
+                if text:
+                    seen.setdefault(text.lower(), text)
+            return list(seen.values())
+
+        self.countries = clean(self.countries)
+        self.excluded_keywords = clean(self.excluded_keywords)
+        return self
+
+
+class AutoApplyStatus(BaseModel):
+    """Réglages + activité du jour."""
+
+    settings: AutoApplySettingsRead
+    email_configured: bool = Field(description="false : les candidatures sont seulement préparées")
+    today_count: int = Field(description="Candidatures automatiques créées aujourd'hui (UTC)")
+    today_sent: int
+    remaining_today: int
+    eligible_jobs: int = Field(description="Offres correspondant aux critères, pas encore traitées")
+
+
+class AutoApplyItem(BaseModel):
+    application_id: uuid.UUID | None
+    job_id: uuid.UUID
+    job_title: str
+    company_name: str | None
+    score: int | None
+    outcome: str = Field(description="sent, prepared ou error")
+    detail: str | None = None
+
+
+class AutoApplyRunResult(BaseModel):
+    status: str = Field(description="done, queued, disabled ou limit_reached")
+    sent: int = 0
+    prepared: int = 0
+    errors: int = 0
+    items: list[AutoApplyItem] = []

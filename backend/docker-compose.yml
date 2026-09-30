@@ -31,6 +31,9 @@ x-backend: &backend
     FORWARDED_ALLOW_IPS: ${FORWARDED_ALLOW_IPS:-127.0.0.1}
   volumes:
     - storage_data:/app/storage
+  # Accès à un service de la machine hôte (ex. Ollama) : http://host.docker.internal:11434
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
   networks:
     - garrix
   restart: unless-stopped

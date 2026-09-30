@@ -43,6 +43,12 @@ def get_ai_provider() -> AIProvider | None:
         return AnthropicProvider(
             settings.AI_API_KEY.get_secret_value(), settings.AI_MODEL, settings.AI_TIMEOUT_SECONDS
         )
+    if settings.AI_PROVIDER == "ollama":
+        from app.modules.ai.providers.ollama_provider import OllamaProvider
+
+        return OllamaProvider(
+            settings.OLLAMA_BASE_URL, settings.AI_MODEL, settings.AI_TIMEOUT_SECONDS
+        )
     return None
 
 

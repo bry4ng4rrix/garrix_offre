@@ -143,6 +143,15 @@ class _PrepareSheetState extends ConsumerState<PrepareSheet> {
           value: _email,
           onChanged: _loading ? null : (value) => setState(() => _email = value),
         ),
+        if (_loading && ai != null && ai.enabled) ...[
+          const Gap(12),
+          const NoticeBanner(
+            icon: Icons.hourglass_top_rounded,
+            message:
+                'Rédaction par l\'IA en cours, à partir de l\'offre et de votre profil. '
+                'Avec un modèle installé sur le serveur, comptez 1 à 5 minutes.',
+          ),
+        ],
         if (ai != null && !ai.enabled) ...[
           const Gap(12),
           const NoticeBanner(

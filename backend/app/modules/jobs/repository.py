@@ -47,6 +47,17 @@ class JobFilters:
     sort_desc: bool = True
 
 
+def country_condition(countries: list[str]) -> ColumnElement[bool]:
+    """Offres situées dans l'un de ces pays (insensible à la casse ; NO_COUNTRY = sans pays)."""
+    names = [c.strip().lower() for c in countries if c.strip() and c.strip() != NO_COUNTRY]
+    conditions: list[ColumnElement[bool]] = []
+    if names:
+        conditions.append(func.lower(Job.country).in_(names))
+    if NO_COUNTRY in (c.strip() for c in countries):
+        conditions.append(or_(Job.country.is_(None), Job.country == ""))
+    return or_(*conditions) if conditions else Job.id.is_not(None)
+
+
 def _as_uuid(value: str) -> uuid.UUID | None:
     try:
         return uuid.UUID(value)
@@ -124,7 +135,7 @@ class JobRepository(BaseRepository[Job]):
                 )
             )
         if filters.country:
-            stmt = stmt.where(self._country_condition(filters.country))
+            stmt = stmt.where(country_condition(filters.country))
         if filters.published_after:
             stmt = stmt.where(Job.published_at >= filters.published_after)
         if filters.published_before:
@@ -132,16 +143,6 @@ class JobRepository(BaseRepository[Job]):
 
         stmt = stmt.where(*self._status_conditions(user_id, filters.status))
         return stmt.order_by(*self._ordering(filters, needs_match))
-
-    @staticmethod
-    def _country_condition(countries: list[str]) -> ColumnElement[bool]:
-        names = [c.strip().lower() for c in countries if c.strip() and c.strip() != NO_COUNTRY]
-        conditions: list[ColumnElement[bool]] = []
-        if names:
-            conditions.append(func.lower(Job.country).in_(names))
-        if NO_COUNTRY in (c.strip() for c in countries):
-            conditions.append(or_(Job.country.is_(None), Job.country == ""))
-        return or_(*conditions) if conditions else Job.id.is_not(None)
 
     def country_counts(
         self, user_id: uuid.UUID, filters: JobFilters

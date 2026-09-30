@@ -28,6 +28,7 @@ celery_app = Celery(
         "app.modules.scraping.tasks",
         "app.modules.matching.tasks",
         "app.modules.jobs.tasks",
+        "app.modules.applications.tasks",
     ],
 )
 

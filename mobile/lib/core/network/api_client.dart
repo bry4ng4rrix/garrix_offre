@@ -30,7 +30,8 @@ class ApiClient {
       baseUrl: '$serverUrl$kApiPrefix',
       connectTimeout: const Duration(seconds: 15),
       sendTimeout: const Duration(seconds: 60),
-      receiveTimeout: const Duration(seconds: 120),
+      // Large : la rédaction par une IA locale (Ollama sans GPU) peut prendre plusieurs minutes.
+      receiveTimeout: const Duration(minutes: 10),
       headers: {'Accept': 'application/json'},
       listFormat: ListFormat.multi,
     );
