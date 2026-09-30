@@ -70,7 +70,6 @@ docker compose ps        # tous les services doivent être "healthy"
 | ReDoc | http://localhost:8000/redoc |
 | Santé | http://localhost:8000/health et http://localhost:8000/ready |
 | n8n | http://localhost:5678 |
-| Reverse proxy nginx | http://localhost:8080 |
 | PostgreSQL | `127.0.0.1:5433` (variable `POSTGRES_PORT`) |
 | Redis | `127.0.0.1:6380` (variable `REDIS_PORT`) |
 
@@ -151,7 +150,8 @@ Toutes sont décrites dans [`.env.example`](.env.example). `make env` crée `.en
 | `FRANCE_TRAVAIL_CLIENT_ID/SECRET`, `SOURCE_*` | Clés des API d'offres (voir [Sources](#9-sources-doffres)) |
 | `MATCHING_*_WEIGHT`, `MATCHING_DEFAULT_THRESHOLD` | Poids et seuil par défaut du matching |
 | `AI_PROVIDER`, `AI_API_KEY`, `AI_MODEL` | IA optionnelle |
-| `API_PORT`, `N8N_PORT`, `NGINX_PORT`, `POSTGRES_PORT`, `REDIS_PORT` | Ports publiés sur la machine |
+| `API_PORT`, `N8N_PORT`, `POSTGRES_PORT`, `REDIS_PORT` | Ports publiés sur la machine (chaque service sur son port) |
+| `N8N_BIND_ADDRESS`, `N8N_PUBLIC_URL` | Production : n8n public (`0.0.0.0`) ou local (`127.0.0.1`), URL publique de n8n |
 
 Les secrets sont typés `SecretStr` : ils n'apparaissent jamais dans les logs.
 
@@ -160,7 +160,10 @@ Les secrets sont typés `SecretStr` : ils n'apparaissent jamais dans les logs.
 ## 4. Docker
 
 `docker-compose.yml` démarre : `postgres` (17), `redis`, `migrate` (job ponctuel), `api`,
-`worker` (Celery), `n8n`, `nginx`. Tous partagent le réseau privé `garrix-offre-network`.
+`worker` (Celery), `n8n`. Tous partagent le réseau privé `garrix-offre-network`.
+Pas de reverse proxy : chaque service est joignable sur son propre port. `nginx` reste disponible
+en option (`docker compose --profile proxy up -d`, port `NGINX_PORT`), par exemple pour ajouter
+plus tard un domaine et HTTPS.
 
 - `migrate` applique les migrations **non destructives** puis charge les référentiels ; `api`
   et `worker` ne démarrent qu'après sa réussite.
@@ -595,9 +598,9 @@ Page HTML : n'utilisez l'adapter `html_page` que si les CGU l'autorisent (`terms
 
 ## 20. Déploiement sur un VPS et CI/CD
 
-Voir [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) : `docker-compose.prod.yml` (seul nginx est
-public ; API, n8n, PostgreSQL et Redis restent sur `127.0.0.1`), création du compte
-administrateur en ligne de commande, et pipeline GitHub Actions (tests → image → déploiement SSH).
+Voir [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) : `docker-compose.prod.yml` (API publique sur
+le port 8000, n8n sur 5678 une fois son compte propriétaire créé, PostgreSQL et Redis sur
+`127.0.0.1`), création des comptes, et pipeline GitHub Actions (tests → image → déploiement SSH).
 
 ---
 

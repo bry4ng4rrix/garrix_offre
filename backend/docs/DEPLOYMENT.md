@@ -3,13 +3,15 @@
 ## Architecture en production
 
 ```
-Internet ──▶ nginx :80 ──▶ api :8000 (127.0.0.1)      worker Celery
-                           n8n :5678 (127.0.0.1)       PostgreSQL :5433 (127.0.0.1)
-                                                        Redis :6380 (127.0.0.1)
+Internet ──▶ api :8000                 worker Celery (pas de port)
+Internet ──▶ n8n :5678 (après création de son compte propriétaire, sinon 127.0.0.1)
+             PostgreSQL :5433 et Redis :6380 → 127.0.0.1 uniquement
 ```
 
-- `docker-compose.prod.yml` (surcharge) : seul **nginx** est public ; l'API et n8n n'écoutent
-  que sur `127.0.0.1`.
+- Pas de reverse proxy : chaque service est joignable directement sur **son propre port**
+  (nginx existe encore dans `docker-compose.yml` mais il est désactivé, profil `proxy`).
+- `docker-compose.prod.yml` (surcharge) : n8n n'est public que si `N8N_BIND_ADDRESS=0.0.0.0`
+  dans le `.env` du serveur.
 - `.env` du serveur : `APP_ENV=production`, `LOG_FORMAT=json`, `ALLOW_REGISTRATION=false`,
   secrets générés sur le serveur (jamais copiés depuis un poste de développement).
 - Serveur actuel : `allsafe@185.215.167.79`, dossier `~/garrix-offre`.
@@ -18,18 +20,22 @@ Internet ──▶ nginx :80 ──▶ api :8000 (127.0.0.1)      worker Celery
 
 | Port | Écoute sur | Service | Accès |
 |---|---|---|---|
-| 80 | toutes les interfaces | nginx → API | **public** : `http://185.215.167.79/` |
-| 8000 | 127.0.0.1 | API (uvicorn) | serveur uniquement |
-| 5678 | 127.0.0.1 | n8n | tunnel SSH (voir plus bas) |
-| 5433 | 127.0.0.1 | PostgreSQL | serveur uniquement |
-| 6380 | 127.0.0.1 | Redis | serveur uniquement |
+| 8000 | toutes les interfaces | API | **public** : `http://185.215.167.79:8000/docs` |
+| 5678 | 127.0.0.1, puis toutes les interfaces | n8n | tunnel SSH, puis `http://185.215.167.79:5678` |
+| 5433 | 127.0.0.1 | PostgreSQL | serveur uniquement (ou tunnel SSH) |
+| 6380 | 127.0.0.1 | Redis | serveur uniquement (ou tunnel SSH) |
 
-Les ports 3000, 3010, 8010 et 9001-9010 du VPS appartiennent à d'autres applications
-(`smart_*`, `beszel-agent`) : ne pas les utiliser. Pour changer un port de Garrix Offre, modifiez
-`NGINX_PORT`, `API_PORT`, `N8N_PORT`, `POSTGRES_PORT` ou `REDIS_PORT` dans le `.env` du serveur.
+Le port 80 n'est plus utilisé par Garrix Offre. Les ports 3000, 3010, 8010 et 9001-9010 du VPS
+appartiennent à d'autres applications (`smart_*`, `beszel-agent`) : ne pas les utiliser. Pour
+changer un port, modifiez `API_PORT`, `N8N_PORT`, `POSTGRES_PORT` ou `REDIS_PORT` dans le `.env`
+du serveur (et la variable GitHub `API_PORT` pour la vérification de la CI).
 
-URL publiques : `/` (accueil), `/docs` (Swagger), `/health`, `/ready`, `/api/v1/...`,
-WebSocket `ws://185.215.167.79/api/v1/ws`.
+PostgreSQL et Redis ne sont jamais publiés sur Internet (Redis n'a pas de mot de passe) : pour
+un outil comme DBeaver, utilisez un tunnel SSH
+(`ssh -i ~/.ssh/garrix_offre_deploy -L 5433:127.0.0.1:5433 allsafe@185.215.167.79`).
+
+URL de l'API : `http://185.215.167.79:8000/` (accueil), `/docs` (Swagger), `/health`, `/ready`,
+`/api/v1/...`, WebSocket `ws://185.215.167.79:8000/api/v1/ws`.
 
 ## Premier déploiement (déjà effectué)
 
@@ -53,12 +59,14 @@ et vérifie `/ready`.
    ```
    Le mot de passe est demandé au clavier. Voir [Créer des utilisateurs](#créer-des-utilisateurs)
    pour les comptes suivants.
-2. **Configurer n8n** via un tunnel SSH (n8n n'est pas exposé sur Internet) :
+2. **Configurer n8n.** Tant que son compte propriétaire n'existe pas, n8n n'écoute que sur
+   `127.0.0.1` (sinon le premier visiteur pourrait le créer). Passez par un tunnel SSH :
    ```bash
    ssh -i ~/.ssh/garrix_offre_deploy -L 5678:127.0.0.1:5678 allsafe@185.215.167.79
    ```
    Ouvrez http://localhost:5678, créez le compte propriétaire, les credentials Telegram / SMTP /
-   IMAP, puis activez les workflows.
+   IMAP, puis activez les workflows. Ensuite, pour ouvrir n8n sur `http://185.215.167.79:5678` :
+   `N8N_BIND_ADDRESS=0.0.0.0` dans `~/garrix-offre/.env`, puis `dc up -d`.
 3. **Compléter le `.env` du serveur** (`nano ~/garrix-offre/.env`) : Telegram, SMTP, clés des
    API d'offres (`FRANCE_TRAVAIL_*`, `SOURCE_*`), IA. Puis :
    `docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d`.
@@ -99,7 +107,7 @@ GitHub → dépôt → **Settings → Secrets and variables → Actions → New 
 | Nom | Défaut | Rôle |
 |---|---|---|
 | `VPS_PATH` | `garrix-offre` | dossier du projet sur le serveur (relatif au dossier personnel) |
-| `NGINX_PORT` | `80` | port public vérifié après le déploiement |
+| `API_PORT` | `8000` | port public de l'API, vérifié après le déploiement |
 
 ### Environnement
 
@@ -129,8 +137,8 @@ dc down                            # arrêter et supprimer les conteneurs (les d
 dc exec postgres pg_dump -U garrix garrix_offre > sauvegarde.sql   # sauvegarde
 ```
 
-`dc up -d` sans `-f docker-compose.prod.yml` publierait l'API et n8n sur Internet : utilisez
-toujours l'alias. Ne lancez jamais `dc down -v` (supprime les volumes, donc la base).
+`dc up -d` sans `-f docker-compose.prod.yml` publierait n8n sur Internet même sans compte
+propriétaire : utilisez toujours l'alias. Ne lancez jamais `dc down -v` (supprime les volumes, donc la base).
 
 ## Créer des utilisateurs
 
@@ -144,7 +152,7 @@ Les inscriptions publiques sont fermées (`ALLOW_REGISTRATION=false`). Trois pos
    ```
    Sur un compte existant, le script remplace le mot de passe et réactive le compte
    (pratique en cas d'oubli).
-2. **API, en tant qu'administrateur** (Swagger `http://185.215.167.79/docs` ou l'app Flutter) :
+2. **API, en tant qu'administrateur** (Swagger `http://185.215.167.79:8000/docs` ou l'app Flutter) :
    `POST /api/v1/auth/login` → bouton **Authorize** → `POST /api/v1/users`
    avec `{"email": "...", "password": "...", "is_superuser": false}`.
    `GET /api/v1/users` liste les comptes, `PATCH /api/v1/users/{id}` active/désactive ou
