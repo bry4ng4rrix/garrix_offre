@@ -1,0 +1,8 @@
+# Dépendances de développement : tests, lint, formatage, typage
+-r requirements.txt
+pytest==9.1.1
+pytest-timeout==2.4.0
+httpx2==2.13.1  # client HTTP du TestClient Starlette 1.x
+ruff==0.16.9
+black==26.5.1
+mypy==2.3.1

@@ -1,0 +1,26 @@
+# Secrets : ne JAMAIS committer le vrai fichier .env
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Fichiers uploadés (CV, photos...) : données privées
+storage/*
+!storage/.gitkeep
+
+# Outils
+.idea/
+.vscode/
+*.log
+.DS_Store

@@ -1,0 +1,41 @@
+# =============================================================================
+# Surcharge pour le développement : hot reload + logs lisibles.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+#   (ou : make dev-docker)
+#
+# Le code source est monté dans les conteneurs : toute modification de app/
+# redémarre automatiquement l'API et le worker.
+# =============================================================================
+x-dev-image: &dev-image
+  image: garrix-offre-api:dev
+  build:
+    context: .
+    target: dev
+
+services:
+  migrate:
+    <<: *dev-image
+
+  api:
+    <<: *dev-image
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--reload-dir", "app"]
+    environment:
+      LOG_FORMAT: console
+      LOG_LEVEL: DEBUG
+    volumes:
+      - ./app:/app/app
+      - ./alembic:/app/alembic
+      - ./scripts:/app/scripts
+      - ./tests:/app/tests
+      - storage_data:/app/storage
+
+  worker:
+    <<: *dev-image
+    # watchfiles (installé avec uvicorn[standard]) relance Celery quand le code change.
+    command: ["watchfiles", "--filter", "python", "celery -A app.worker worker --loglevel=INFO --concurrency=1", "app"]
+    environment:
+      LOG_FORMAT: console
+    volumes:
+      - ./app:/app/app
+      - storage_data:/app/storage
