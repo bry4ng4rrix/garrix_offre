@@ -289,7 +289,9 @@ class _ResponseDetailSheetState extends ConsumerState<ResponseDetailSheet> {
           const PopupMenuItem(value: 'type', child: Text('Changer le type')),
           PopupMenuItem(
             value: 'link',
-            child: Text(r.applicationId == null ? 'Associer à une candidature' : 'Changer de candidature'),
+            child: Text(
+              r.applicationId == null ? 'Associer à une candidature' : 'Changer de candidature',
+            ),
           ),
           const PopupMenuItem(value: 'copy', child: Text('Copier l\'adresse')),
         ],
@@ -301,7 +303,11 @@ class _ResponseDetailSheetState extends ConsumerState<ResponseDetailSheet> {
           children: [
             Pill(r.responseType.label, color: r.responseType.color),
             if (analysis.generatedBy == GeneratedBy.ai)
-              const Pill('Analysée par l\'IA', icon: Icons.auto_awesome_rounded, color: AppColors.violet),
+              const Pill(
+                'Analysée par l\'IA',
+                icon: Icons.auto_awesome_rounded,
+                color: AppColors.violet,
+              ),
           ],
         ),
         const Gap(14),
@@ -434,7 +440,8 @@ class _LinkedApplication extends ConsumerWidget {
               const Gap(12),
               NoticeBanner(
                 title: 'Statut suggéré : ${suggested!.label}',
-                message: 'D\'après ce message, la candidature peut passer en « ${suggested!.label} ».',
+                message:
+                    'D\'après ce message, la candidature peut passer en « ${suggested!.label} ».',
                 icon: suggested!.icon,
                 color: suggested!.color,
                 actionLabel: 'Mettre à jour le statut',
@@ -600,7 +607,8 @@ class _ResponseFormSheetState extends ConsumerState<ResponseFormSheet> {
       key: _form,
       child: SheetLayout(
         title: 'Ajouter une réponse',
-        subtitle: 'Collez l\'email reçu : son type (entretien, refus...) est détecté automatiquement.',
+        subtitle:
+            'Collez l\'email reçu : son type (entretien, refus...) est détecté automatiquement.',
         expand: true,
         footer: PrimaryButton(label: 'Enregistrer', loading: _loading, onPressed: _save),
         children: [
@@ -658,7 +666,11 @@ class _ResponseFormSheetState extends ConsumerState<ResponseFormSheet> {
           ),
           if (_error != null) ...[
             const Gap(12),
-            NoticeBanner(message: _error!, color: AppColors.danger, icon: Icons.error_outline_rounded),
+            NoticeBanner(
+              message: _error!,
+              color: AppColors.danger,
+              icon: Icons.error_outline_rounded,
+            ),
           ],
         ],
       ),

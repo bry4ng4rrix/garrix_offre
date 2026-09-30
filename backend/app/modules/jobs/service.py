@@ -52,6 +52,12 @@ class JobService:
         jobs, total = self.jobs.paginate(self.jobs.search_query(user.id, filters), pagination)
         return self._to_reads(user, jobs, include_description), total
 
+    def country_counts(self, user: User, filters: JobFilters) -> list[dict[str, Any]]:
+        return [
+            {"country": country, "count": count}
+            for country, count in self.jobs.country_counts(user.id, filters)
+        ]
+
     def get_job(self, user: User, job_id: uuid.UUID, mark_seen: bool = True) -> dict[str, Any]:
         job = self._get(job_id)
         if mark_seen:

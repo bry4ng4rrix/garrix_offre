@@ -90,7 +90,11 @@ class ApplicationCard extends StatelessWidget {
   }
   if (followUp != null &&
       (status == ApplicationStatus.submitted || status == ApplicationStatus.followUp)) {
-    return (Icons.schedule_rounded, 'Relance prévue le ${Fmt.date(followUp)}', AppColors.textSecondary);
+    return (
+      Icons.schedule_rounded,
+      'Relance prévue le ${Fmt.date(followUp)}',
+      AppColors.textSecondary,
+    );
   }
   if (application.submittedAt != null) {
     return (

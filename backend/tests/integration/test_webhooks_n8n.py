@@ -321,3 +321,52 @@ def test_source_categories_and_freelance_missions(
         "data"
     ]
     assert jobs["pagination"]["total"] == 1
+
+
+def test_job_filters_by_categories_and_countries(
+    client: TestClient, n8n_headers: dict[str, str], user_headers: dict[str, str]
+) -> None:
+    def send(source: str, title: str, location: str, number: int) -> None:
+        job = job_payload(
+            external_id=f"job-{number}",
+            title=title,
+            url=f"https://example.com/jobs/{number}",
+            location=location,
+        )
+        response = client.post(
+            f"{WEBHOOKS}/jobs", headers=n8n_headers, json={"source_name": source, "jobs": [job]}
+        )
+        assert response.status_code == 200, response.text
+
+    send("Remote OK", "Développeur Python", "Paris, France", 1)
+    send("Adzuna", "Ingénieur backend Django", "Madrid, Espagne", 2)
+    send("Codeur.com", "Création d'une API Django", "Remote", 3)
+
+    def search(query: str) -> list[str]:
+        data = client.get(f"{API}/jobs?status=all&{query}", headers=user_headers).json()["data"]
+        return sorted(item["title"] for item in data["items"])
+
+    # Offres d'emploi (jobs + services) séparées des missions freelance (clients).
+    offers = "source_category=jobs&source_category=services"
+    assert search(offers) == ["Développeur Python", "Ingénieur backend Django"]
+    assert search("source_category=clients") == ["Création d'une API Django"]
+
+    # Filtre pays (insensible à la casse, répétable, "none" = sans pays).
+    assert search(f"{offers}&country=france") == ["Développeur Python"]
+    assert search("country=France&country=Espagne") == [
+        "Développeur Python",
+        "Ingénieur backend Django",
+    ]
+    assert search("country=none") == ["Création d'une API Django"]
+
+    countries = client.get(
+        f"{API}/jobs/countries?status=all&{offers}&country=France", headers=user_headers
+    ).json()["data"]
+    # Le filtre pays est ignoré pour le comptage : tous les pays restent proposés.
+    assert {entry["country"]: entry["count"] for entry in countries} == {"France": 1, "Espagne": 1}
+    everything = client.get(f"{API}/jobs/countries?status=all", headers=user_headers).json()["data"]
+    assert {"country": None, "count": 1} in everything
+
+    too_many = "&".join(f"country=c{i}" for i in range(51))
+    response = client.get(f"{API}/jobs?{too_many}", headers=user_headers)
+    assert response.json()["error"]["code"] == "INVALID_COUNTRY_FILTER"

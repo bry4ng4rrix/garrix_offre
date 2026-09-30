@@ -325,8 +325,7 @@ abstract final class AppTheme {
       ),
       checkboxTheme: CheckboxThemeData(
         fillColor: WidgetStateProperty.resolveWith(
-          (states) =>
-              states.contains(WidgetState.selected) ? AppColors.accent : Colors.transparent,
+          (states) => states.contains(WidgetState.selected) ? AppColors.accent : Colors.transparent,
         ),
         checkColor: const WidgetStatePropertyAll(AppColors.onAccent),
         side: const BorderSide(color: AppColors.borderStrong, width: 1.5),
@@ -420,15 +419,21 @@ abstract final class AppTheme {
   static TextTheme _textTheme(TextTheme base) {
     const primary = AppColors.textPrimary;
     const secondary = AppColors.textSecondary;
-    TextStyle? style(TextStyle? s, double size, FontWeight weight, {double? spacing, Color? color, double? height}) =>
-        s?.copyWith(
-          fontFamily: fontFamily,
-          fontSize: size,
-          fontWeight: weight,
-          letterSpacing: spacing,
-          color: color ?? primary,
-          height: height,
-        );
+    TextStyle? style(
+      TextStyle? s,
+      double size,
+      FontWeight weight, {
+      double? spacing,
+      Color? color,
+      double? height,
+    }) => s?.copyWith(
+      fontFamily: fontFamily,
+      fontSize: size,
+      fontWeight: weight,
+      letterSpacing: spacing,
+      color: color ?? primary,
+      height: height,
+    );
     return base.copyWith(
       displayLarge: style(base.displayLarge, 48, FontWeight.w700, spacing: -1.6, height: 1.05),
       displayMedium: style(base.displayMedium, 38, FontWeight.w700, spacing: -1.2, height: 1.1),

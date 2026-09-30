@@ -104,16 +104,15 @@ class _EditDocumentSheetState extends ConsumerState<EditDocumentSheet> {
           ),
           if (_hasTarget) ...[
             formGap,
-            AppTextField(
-              label: 'Poste ciblé',
-              optional: true,
-              controller: _target,
-              maxLength: 200,
-            ),
+            AppTextField(label: 'Poste ciblé', optional: true, controller: _target, maxLength: 200),
           ],
           if (_error != null) ...[
             const Gap(12),
-            NoticeBanner(message: _error!, color: AppColors.danger, icon: Icons.error_outline_rounded),
+            NoticeBanner(
+              message: _error!,
+              color: AppColors.danger,
+              icon: Icons.error_outline_rounded,
+            ),
           ],
         ],
       ),

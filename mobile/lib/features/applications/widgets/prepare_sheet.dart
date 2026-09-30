@@ -98,7 +98,8 @@ class _PrepareSheetState extends ConsumerState<PrepareSheet> {
 
     return SheetLayout(
       title: 'Préparer la candidature',
-      subtitle: 'Le CV est choisi et les brouillons sont rédigés. Rien n\'est envoyé : '
+      subtitle:
+          'Le CV est choisi et les brouillons sont rédigés. Rien n\'est envoyé : '
           'vous validerez l\'envoi à l\'étape suivante.',
       footer: PrimaryButton(
         label: 'Préparer',
@@ -145,7 +146,8 @@ class _PrepareSheetState extends ConsumerState<PrepareSheet> {
         if (ai != null && !ai.enabled) ...[
           const Gap(12),
           const NoticeBanner(
-            message: 'IA non configurée : les textes seront créés à partir de modèles, '
+            message:
+                'IA non configurée : les textes seront créés à partir de modèles, '
                 'à personnaliser ensuite.',
           ),
         ],

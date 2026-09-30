@@ -101,15 +101,12 @@ void main() {
         containsAll([ApplicationStatus.preparing, ApplicationStatus.withdrawn]),
       );
       final submitted = Application.fromJson(_submittedJson);
-      expect(
-        submitted.manualTransitions,
-        [
-          ApplicationStatus.followUp,
-          ApplicationStatus.interview,
-          ApplicationStatus.rejected,
-          ApplicationStatus.withdrawn,
-        ],
-      );
+      expect(submitted.manualTransitions, [
+        ApplicationStatus.followUp,
+        ApplicationStatus.interview,
+        ApplicationStatus.rejected,
+        ApplicationStatus.withdrawn,
+      ]);
     });
 
     test('étapes du parcours', () {
@@ -245,10 +242,10 @@ void main() {
 
     test('mise à jour partielle : les valeurs nulles effacent le champ', () {
       expect(ApplicationUpdate.cv(null).toJson(), {'cv_document_id': null});
-      expect(
-        ApplicationUpdate.email(subject: ' Objet ', body: '').toJson(),
-        {'email_subject': 'Objet', 'email_body': null},
-      );
+      expect(ApplicationUpdate.email(subject: ' Objet ', body: '').toJson(), {
+        'email_subject': 'Objet',
+        'email_body': null,
+      });
       expect(
         ApplicationUpdate.notes(notes: 'Note', followUpAt: DateTime.utc(2026, 10, 7)).toJson(),
         {'notes': 'Note', 'follow_up_at': '2026-10-07T00:00:00.000Z'},
@@ -275,10 +272,11 @@ void main() {
     });
 
     test('envoi : confirmation explicite transmise telle quelle', () {
-      expect(
-        const SubmitRequest(confirm: true, sendEmail: true, toEmail: 'rh@acme.mg').toJson(),
-        {'confirm': true, 'send_email': true, 'to_email': 'rh@acme.mg'},
-      );
+      expect(const SubmitRequest(confirm: true, sendEmail: true, toEmail: 'rh@acme.mg').toJson(), {
+        'confirm': true,
+        'send_email': true,
+        'to_email': 'rh@acme.mg',
+      });
       expect(
         const SubmitRequest(
           confirm: true,
@@ -297,16 +295,19 @@ void main() {
         'generate_cover_letter': true,
         'generate_email': false,
       });
-      expect(
-        const GenerateRequest(GenerationKind.recruiterReply, responseId: 'r1').toJson(),
-        {'kind': 'recruiter_reply', 'response_id': 'r1', 'save': false},
-      );
+      expect(const GenerateRequest(GenerationKind.recruiterReply, responseId: 'r1').toJson(), {
+        'kind': 'recruiter_reply',
+        'response_id': 'r1',
+        'save': false,
+      });
       expect(const StatusChange(ApplicationStatus.interview, note: ' ').toJson(), {
         'status': 'interview',
       });
       expect(
-        const RecruiterResponseUpdate(isRead: true, responseType: RecruiterResponseType.offer)
-            .toJson(),
+        const RecruiterResponseUpdate(
+          isRead: true,
+          responseType: RecruiterResponseType.offer,
+        ).toJson(),
         {'is_read': true, 'response_type': 'offer'},
       );
       expect(

@@ -12,10 +12,7 @@ import '../job_labels.dart';
 
 /// `Entreprise · Lieu` (ou ce qui est connu).
 String jobSubtitle(Job job) {
-  final parts = <String>[
-    ?job.company.name,
-    ?job.location.label,
-  ];
+  final parts = <String>[?job.company.name, ?job.location.label];
   if (parts.isEmpty) return job.location.workModeLabel ?? 'Entreprise non indiquée';
   return parts.join(' · ');
 }
@@ -67,7 +64,12 @@ class JobCard extends ConsumerWidget {
     return AppCard(
       onTap: onTap,
       onLongPress: onMore,
-      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.xs, AppSpacing.xs),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.lg,
+        AppSpacing.xs,
+        AppSpacing.xs,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -229,8 +231,10 @@ class JobCompactTile extends StatelessWidget {
                   ),
                   const Gap(2),
                   Text(
-                    [jobSubtitle(job), if (job.displayDate != null) Fmt.relative(job.displayDate)]
-                        .join(' · '),
+                    [
+                      jobSubtitle(job),
+                      if (job.displayDate != null) Fmt.relative(job.displayDate),
+                    ].join(' · '),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: theme.bodySmall?.copyWith(color: AppColors.textTertiary),
@@ -276,7 +280,12 @@ Future<JobQuickAction?> showJobActionsSheet(BuildContext context, Job job) {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, AppSpacing.md),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.page,
+                0,
+                AppSpacing.page,
+                AppSpacing.md,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

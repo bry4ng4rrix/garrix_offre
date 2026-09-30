@@ -107,7 +107,8 @@ class _StatusChangeSheetState extends ConsumerState<StatusChangeSheet> {
         if (current.allowedTransitions.contains(ApplicationStatus.submitted)) ...[
           const Gap(4),
           const NoticeBanner(
-            message: 'Pour indiquer que la candidature est envoyée, utilisez « Valider l\'envoi » : '
+            message:
+                'Pour indiquer que la candidature est envoyée, utilisez « Valider l\'envoi » : '
                 'une confirmation explicite est demandée.',
           ),
         ],
@@ -123,7 +124,11 @@ class _StatusChangeSheetState extends ConsumerState<StatusChangeSheet> {
         ),
         if (_error != null) ...[
           const Gap(8),
-          NoticeBanner(message: _error!, color: AppColors.danger, icon: Icons.error_outline_rounded),
+          NoticeBanner(
+            message: _error!,
+            color: AppColors.danger,
+            icon: Icons.error_outline_rounded,
+          ),
         ],
       ],
     );
@@ -134,7 +139,9 @@ class _StatusChangeSheetState extends ConsumerState<StatusChangeSheet> {
 String statusDescription(ApplicationStatus from, ApplicationStatus to) => switch (to) {
   ApplicationStatus.notApplied => 'Aucune démarche engagée',
   ApplicationStatus.preparing =>
-    from == ApplicationStatus.ready ? 'Revenir à la rédaction des brouillons' : 'Commencer la préparation',
+    from == ApplicationStatus.ready
+        ? 'Revenir à la rédaction des brouillons'
+        : 'Commencer la préparation',
   ApplicationStatus.ready => 'Brouillons terminés, prête à être validée',
   ApplicationStatus.submitted => 'Envoi confirmé',
   ApplicationStatus.followUp => 'Une relance est nécessaire ou a été faite',

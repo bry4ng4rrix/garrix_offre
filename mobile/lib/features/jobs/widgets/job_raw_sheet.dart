@@ -13,11 +13,8 @@ import '../jobs_providers.dart';
 import 'external_links.dart';
 
 /// Données brutes et normalisées d'une offre (admin, débogage des parsers).
-Future<void> showJobRawSheet(BuildContext context, String jobId) => showAppSheet<void>(
-  context,
-  expand: true,
-  builder: (_) => JobRawSheet(jobId: jobId),
-);
+Future<void> showJobRawSheet(BuildContext context, String jobId) =>
+    showAppSheet<void>(context, expand: true, builder: (_) => JobRawSheet(jobId: jobId));
 
 class JobRawSheet extends ConsumerStatefulWidget {
   const JobRawSheet({super.key, required this.jobId});

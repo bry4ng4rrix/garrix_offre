@@ -53,7 +53,8 @@ class ExperiencesPage extends ConsumerWidget {
                 EmptyState(
                   icon: Icons.timeline_rounded,
                   title: 'Aucune expérience',
-                  message: 'Ajoutez vos postes successifs : entreprise, dates, missions '
+                  message:
+                      'Ajoutez vos postes successifs : entreprise, dates, missions '
                       'et technologies utilisées.',
                   actionLabel: 'Ajouter une expérience',
                   onAction: () => _openForm(context),
@@ -296,7 +297,10 @@ class _ExperienceFormPageState extends ConsumerState<_ExperienceFormPage> {
     final notifier = ref.read(experiencesProvider.notifier);
     try {
       _editing ? await notifier.edit(widget.experience!.id, input) : await notifier.create(input);
-      showToast(_editing ? 'Expérience mise à jour' : 'Expérience ajoutée', kind: ToastKind.success);
+      showToast(
+        _editing ? 'Expérience mise à jour' : 'Expérience ajoutée',
+        kind: ToastKind.success,
+      );
       if (mounted) Navigator.of(context).pop();
     } catch (error) {
       showError(error);

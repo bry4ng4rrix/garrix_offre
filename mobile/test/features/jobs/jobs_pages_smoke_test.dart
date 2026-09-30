@@ -75,6 +75,13 @@ class _FakeJobsRepository implements JobsRepository {
       Paginated(items: jobs, total: jobs.length, page: 1, pageSize: pageSize, pages: 1);
 
   @override
+  Future<List<CountryCount>> countries(JobFilters filters) async => const [
+    CountryCount(country: null, count: 162),
+    CountryCount(country: 'États-Unis', count: 35),
+    CountryCount(country: 'France', count: 2),
+  ];
+
+  @override
   Future<Job> get(String id) async => jobs.firstWhere((job) => job.id == id);
 
   @override
@@ -141,7 +148,9 @@ Future<void> _pump(WidgetTester tester, Widget page, {Size size = const Size(390
         dashboardRepositoryProvider.overrideWithValue(_FakeDashboardRepository()),
         unreadCountProvider.overrideWith(_FakeUnread.new),
         realtimeEventsProvider.overrideWith((ref) => const Stream<RealtimeEvent>.empty()),
-        aiStatusProvider.overrideWith((ref) async => const AiStatus(enabled: true, provider: 'test')),
+        aiStatusProvider.overrideWith(
+          (ref) async => const AiStatus(enabled: true, provider: 'test'),
+        ),
         contractTypesProvider.overrideWith(
           (ref) async => const [ContractType(id: 'c1', code: 'cdi', name: 'CDI')],
         ),
@@ -151,11 +160,7 @@ Future<void> _pump(WidgetTester tester, Widget page, {Size size = const Size(390
           ],
         ),
       ],
-      child: MaterialApp(
-        theme: AppTheme.dark,
-        scaffoldMessengerKey: rootMessengerKey,
-        home: page,
-      ),
+      child: MaterialApp(theme: AppTheme.dark, scaffoldMessengerKey: rootMessengerKey, home: page),
     ),
   );
   for (var i = 0; i < 6; i++) {
@@ -180,8 +185,11 @@ void main() {
 
     testWidgets('DashboardPage ($label)', (tester) async {
       await _pump(tester, const DashboardPage(), size: size);
-      expect(find.text('Bonjour, Jane').evaluate().isNotEmpty ||
-          find.text('Bonsoir, Jane').evaluate().isNotEmpty, isTrue);
+      expect(
+        find.text('Bonjour, Jane').evaluate().isNotEmpty ||
+            find.text('Bonsoir, Jane').evaluate().isNotEmpty,
+        isTrue,
+      );
       expect(find.text('Offres compatibles'), findsOneWidget);
       await _scrollTo(tester, find.text('Taux de réponse'));
       expect(find.text('50 %'), findsOneWidget);
@@ -198,6 +206,30 @@ void main() {
         await tester.pump(const Duration(milliseconds: 50));
       }
       expect(find.text('Afficher les offres'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('JobsPage : sous-onglets et filtre pays ($label)', (tester) async {
+      await _pump(tester, const JobsPage(), size: size);
+      expect(find.text('Offres d\'emploi'), findsOneWidget);
+      expect(find.text('Missions freelance'), findsOneWidget);
+      await tester.tap(find.text('Pays'));
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      expect(find.text('Sans pays (monde)'), findsOneWidget);
+      await tester.tap(find.text('France'));
+      await tester.pump();
+      await tester.tap(find.text('Afficher ce pays'));
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      expect(find.text('France'), findsOneWidget); // pastille « Pays » devenue « France »
+      await tester.tap(find.text('Missions freelance'));
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      expect(find.text('Rechercher une mission, un client…'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 

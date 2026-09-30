@@ -177,12 +177,7 @@ class _EmailDraftSheetState extends _DraftState<EmailDraftSheet> {
     trailing: _GenerateButton(onPressed: saving ? null : _generate),
     footer: saveButton(),
     children: [
-      AppTextField(
-        label: 'Objet',
-        controller: _subject,
-        hint: 'Candidature : ...',
-        maxLength: 255,
-      ),
+      AppTextField(label: 'Objet', controller: _subject, hint: 'Candidature : ...', maxLength: 255),
       formGap,
       AppTextField(
         label: 'Message',

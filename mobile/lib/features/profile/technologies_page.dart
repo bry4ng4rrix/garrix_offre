@@ -54,7 +54,8 @@ class TechnologiesPage extends ConsumerWidget {
                 EmptyState(
                   icon: Icons.memory_outlined,
                   title: 'Aucune technologie recherchée',
-                  message: 'Indiquez les technologies que vous voulez retrouver dans les offres '
+                  message:
+                      'Indiquez les technologies que vous voulez retrouver dans les offres '
                       '(React, Django, AWS…). Elles pèsent selon leur priorité.',
                   actionLabel: 'Ajouter une technologie',
                   onAction: () => _openSheet(context),
@@ -81,9 +82,9 @@ class TechnologiesPage extends ConsumerWidget {
                   categoryLabel(key, categories),
                   trailing: Text(
                     '${groups[key]!.length}',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: AppColors.textTertiary,
-                    ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.labelSmall?.copyWith(color: AppColors.textTertiary),
                   ),
                 ),
                 AppCard(
@@ -122,7 +123,12 @@ class _TechnologyRow extends ConsumerWidget {
       LevelMeter(level: item.level, dimmed: !item.enabled),
       if (item.minYears > 0) DetailText('${yearsLabel(item.minYears)} min.'),
       if (item.isRequired)
-        const Pill('Obligatoire', icon: Icons.lock_outline_rounded, color: AppColors.violet, dense: true),
+        const Pill(
+          'Obligatoire',
+          icon: Icons.lock_outline_rounded,
+          color: AppColors.violet,
+          dense: true,
+        ),
       if (item.priority != Priority.medium) PriorityPill(priority: item.priority),
     ],
   );
@@ -187,7 +193,10 @@ class _TechnologySheetState extends ConsumerState<_TechnologySheet> {
       }
       if (!mounted) return;
       Navigator.of(context).pop();
-      showToast(_editing ? 'Technologie mise à jour' : '« $_name » ajoutée', kind: ToastKind.success);
+      showToast(
+        _editing ? 'Technologie mise à jour' : '« $_name » ajoutée',
+        kind: ToastKind.success,
+      );
     } catch (error) {
       if (mounted) {
         setState(() {

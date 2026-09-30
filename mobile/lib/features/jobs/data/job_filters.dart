@@ -1,4 +1,34 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+
 import '../../../core/models/enums.dart';
+
+/// Valeur spéciale du filtre pays : offres sans pays (télétravail mondial le plus souvent).
+const kNoCountry = 'none';
+
+/// Libellé d'une valeur du filtre pays.
+String countryLabel(String value) => value == kNoCountry ? 'Sans pays (monde)' : value;
+
+/// Sous-onglets de la page Offres : offres d'emploi ou missions de clients freelance.
+enum JobScope {
+  /// Sites d'emploi et API d'offres (catégories `jobs` et `services`).
+  offers('Offres d\'emploi', Icons.work_outline_rounded, [
+    SourceCategory.jobs,
+    SourceCategory.services,
+  ]),
+
+  /// Plateformes où des clients cherchent un prestataire (catégorie `clients`).
+  missions('Missions freelance', Icons.handshake_outlined, [SourceCategory.clients]);
+
+  const JobScope(this.label, this.icon, this.categories);
+  final String label;
+  final IconData icon;
+  final List<SourceCategory> categories;
+
+  /// Onglet d'une offre selon la catégorie de sa source.
+  static JobScope of(SourceCategory? category) =>
+      category == SourceCategory.clients ? missions : offers;
+}
 
 /// Critères de recherche de `GET /jobs` (immuable, comparable : sert de clé à la liste).
 class JobFilters {
@@ -12,7 +42,8 @@ class JobFilters {
     this.company,
     this.source,
     this.experienceLevel,
-    this.sourceCategory,
+    this.scope = JobScope.offers,
+    this.countries = const [],
     this.status,
     this.publishedAfter,
     this.publishedBefore,
@@ -37,7 +68,12 @@ class JobFilters {
 
   /// Code du niveau (`junior`, `mid`...).
   final String? experienceLevel;
-  final SourceCategory? sourceCategory;
+
+  /// Sous-onglet : détermine les catégories de sources interrogées.
+  final JobScope scope;
+
+  /// Pays retenus (triés) ; [kNoCountry] = offres sans pays.
+  final List<String> countries;
 
   /// null : comportement par défaut du serveur (offres nouvelles/actives non ignorées).
   final JobStatusFilter? status;
@@ -59,7 +95,8 @@ class JobFilters {
     Object? company = _unset,
     Object? source = _unset,
     Object? experienceLevel = _unset,
-    Object? sourceCategory = _unset,
+    JobScope? scope,
+    List<String>? countries,
     Object? status = _unset,
     Object? publishedAfter = _unset,
     Object? publishedBefore = _unset,
@@ -77,7 +114,8 @@ class JobFilters {
       company: _clean(pick<String>(company, this.company)),
       source: _clean(pick<String>(source, this.source)),
       experienceLevel: _clean(pick<String>(experienceLevel, this.experienceLevel)),
-      sourceCategory: pick<SourceCategory>(sourceCategory, this.sourceCategory),
+      scope: scope ?? this.scope,
+      countries: countries == null ? this.countries : ([...countries.toSet()]..sort()),
       status: pick<JobStatusFilter>(status, this.status),
       publishedAfter: pick<DateTime>(publishedAfter, this.publishedAfter),
       publishedBefore: pick<DateTime>(publishedBefore, this.publishedBefore),
@@ -101,7 +139,7 @@ class JobFilters {
     company != null,
     source != null,
     experienceLevel != null,
-    sourceCategory != null,
+    countries.isNotEmpty,
     status != null,
     publishedAfter != null,
     publishedBefore != null,
@@ -122,7 +160,8 @@ class JobFilters {
     'company': company,
     'source': source,
     'experience_level': experienceLevel,
-    'source_category': sourceCategory?.apiValue,
+    'source_category': [for (final category in scope.categories) category.apiValue],
+    'country': countries,
     'status': status?.apiValue,
     'published_after': publishedAfter,
     'published_before': publishedBefore,
@@ -142,7 +181,8 @@ class JobFilters {
       other.company == company &&
       other.source == source &&
       other.experienceLevel == experienceLevel &&
-      other.sourceCategory == sourceCategory &&
+      other.scope == scope &&
+      listEquals(other.countries, countries) &&
       other.status == status &&
       other.publishedAfter == publishedAfter &&
       other.publishedBefore == publishedBefore &&
@@ -160,7 +200,8 @@ class JobFilters {
     company,
     source,
     experienceLevel,
-    sourceCategory,
+    scope,
+    Object.hashAll(countries),
     status,
     publishedAfter,
     publishedBefore,

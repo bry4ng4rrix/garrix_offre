@@ -14,12 +14,7 @@ import 'common.dart';
 /// Renvoie `(id: ...)` : l'identifiant choisi, ou `(id: null)` pour « aucun » / « automatique »
 /// selon [noneLabel]. Renvoie null si la feuille est fermée sans choix.
 class CvPickerSheet extends ConsumerWidget {
-  const CvPickerSheet({
-    super.key,
-    this.selectedId,
-    this.noneLabel = 'Aucun CV',
-    this.noneSubtitle,
-  });
+  const CvPickerSheet({super.key, this.selectedId, this.noneLabel = 'Aucun CV', this.noneSubtitle});
 
   final String? selectedId;
   final String noneLabel;

@@ -103,7 +103,8 @@ class _MatchingFormState extends ConsumerState<_MatchingForm> {
       final saveFirst = await confirmDialog(
         context,
         title: 'Modifications non enregistrées',
-        message: 'Le recalcul utilise les poids enregistrés. Enregistrer d\'abord vos modifications ?',
+        message:
+            'Le recalcul utilise les poids enregistrés. Enregistrer d\'abord vos modifications ?',
         confirmLabel: 'Enregistrer et recalculer',
         cancelLabel: 'Recalculer sans',
       );
@@ -173,7 +174,9 @@ class _MatchingFormState extends ConsumerState<_MatchingForm> {
             ),
             if (allIgnored) ...[
               const Gap(4),
-              const InlineError(message: 'Tous les critères sont ignorés : aucune offre ne sera notée.'),
+              const InlineError(
+                message: 'Tous les critères sont ignorés : aucune offre ne sera notée.',
+              ),
             ],
             const Gap(AppSpacing.sm),
             _ShareBar(settings: _weights),

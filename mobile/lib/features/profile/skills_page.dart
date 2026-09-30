@@ -54,7 +54,8 @@ class SkillsPage extends ConsumerWidget {
                 EmptyState(
                   icon: Icons.psychology_outlined,
                   title: 'Aucune compétence',
-                  message: 'Ajoutez ce que vous savez faire : elles sont comparées '
+                  message:
+                      'Ajoutez ce que vous savez faire : elles sont comparées '
                       'aux compétences demandées par chaque offre.',
                   actionLabel: 'Ajouter une compétence',
                   onAction: () => openSkillSheet(context),
@@ -83,9 +84,9 @@ class SkillsPage extends ConsumerWidget {
                   categoryLabel(key, categories),
                   trailing: Text(
                     '${groups[key]!.length}',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: AppColors.textTertiary,
-                    ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.labelSmall?.copyWith(color: AppColors.textTertiary),
                   ),
                 ),
                 AppCard(
@@ -149,17 +150,16 @@ class _SkillSheetState extends ConsumerState<_SkillSheet> {
   late Priority _priority = widget.skill?.priority ?? Priority.medium;
   late bool _enabled = widget.skill?.enabled ?? true;
   late final _years = TextEditingController(
-    text: widget.skill?.yearsExperience == null
-        ? ''
-        : _formatYears(widget.skill!.yearsExperience!),
+    text: widget.skill?.yearsExperience == null ? '' : _formatYears(widget.skill!.yearsExperience!),
   );
   bool _saving = false;
   String? _error;
 
   bool get _editing => widget.skill != null;
 
-  static String _formatYears(double years) =>
-      years == years.roundToDouble() ? years.round().toString() : years.toString().replaceAll('.', ',');
+  static String _formatYears(double years) => years == years.roundToDouble()
+      ? years.round().toString()
+      : years.toString().replaceAll('.', ',');
 
   @override
   void dispose() {
@@ -202,7 +202,10 @@ class _SkillSheetState extends ConsumerState<_SkillSheet> {
       }
       if (!mounted) return;
       Navigator.of(context).pop();
-      showToast(_editing ? 'Compétence mise à jour' : '« $_name » ajoutée', kind: ToastKind.success);
+      showToast(
+        _editing ? 'Compétence mise à jour' : '« $_name » ajoutée',
+        kind: ToastKind.success,
+      );
     } catch (error) {
       if (mounted) {
         setState(() {

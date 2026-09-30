@@ -20,7 +20,8 @@ class PagedListController {
       _state?._updateWhere((item) => test(item as T), (item) => update(item as T));
 
   /// Retire un élément déjà chargé.
-  void removeWhere<T>(bool Function(T item) test) => _state?._removeWhere((item) => test(item as T));
+  void removeWhere<T>(bool Function(T item) test) =>
+      _state?._removeWhere((item) => test(item as T));
 }
 
 /// Liste paginée avec chargement infini, pull-to-refresh, états vide et erreur.
@@ -180,10 +181,7 @@ class _PagedListViewState<T> extends State<PagedListView<T>> {
               if (i < _items.length) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (i > 0) widget.separator,
-                    widget.itemBuilder(context, _items[i]),
-                  ],
+                  children: [if (i > 0) widget.separator, widget.itemBuilder(context, _items[i])],
                 );
               }
               // Pied de liste : chargement, erreur, vide ou fin.

@@ -98,7 +98,12 @@ class ProfilePage extends ConsumerWidget {
               MenuTile(
                 icon: Icons.psychology_outlined,
                 title: 'Compétences',
-                subtitle: _count(skills?.length, 'compétence', 'compétences', 'Ce que vous savez faire'),
+                subtitle: _count(
+                  skills?.length,
+                  'compétence',
+                  'compétences',
+                  'Ce que vous savez faire',
+                ),
                 onTap: () => context.push(Routes.skills),
               ),
               MenuTile(
@@ -245,7 +250,10 @@ class _ProfileHeader extends ConsumerWidget {
     final name = profile.displayName;
     final pills = <Widget>[
       if (profile.yearsOfExperience != null && profile.yearsOfExperience! > 0)
-        Pill('${yearsLabel(profile.yearsOfExperience!)} d\'exp.', icon: Icons.work_history_outlined),
+        Pill(
+          '${yearsLabel(profile.yearsOfExperience!)} d\'exp.',
+          icon: Icons.work_history_outlined,
+        ),
       if (profile.experienceLevel != null && profile.experienceLevel!.isNotEmpty)
         Pill(experienceLevelName(profile.experienceLevel, levels), icon: Icons.trending_up_rounded),
       if (profile.availability != null)

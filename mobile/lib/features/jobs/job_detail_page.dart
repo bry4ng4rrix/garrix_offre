@@ -94,7 +94,9 @@ class _MoreMenu extends ConsumerWidget {
         final ignored = job.status.isIgnored;
         await runAction(
           () => notifier.updateState(JobStateUpdate(isIgnored: !ignored)),
-          success: ignored ? 'Offre rétablie' : 'Offre ignorée : elle n\'apparaîtra plus dans vos listes',
+          success: ignored
+              ? 'Offre rétablie'
+              : 'Offre ignorée : elle n\'apparaîtra plus dans vos listes',
         );
       case _MenuAction.copyLink:
         await copyText(job.listingUrl!, message: 'Lien copié');
@@ -111,13 +113,10 @@ class _MoreMenu extends ConsumerWidget {
           destructive: true,
         );
         if (!confirmed) return;
-        final deleted = await runAction(
-          () async {
-            await ref.read(jobsRepositoryProvider).delete(job.id);
-            return true;
-          },
-          success: 'Offre supprimée',
-        );
+        final deleted = await runAction(() async {
+          await ref.read(jobsRepositoryProvider).delete(job.id);
+          return true;
+        }, success: 'Offre supprimée');
         if (deleted == true) {
           ref.read(jobChangesProvider.notifier).emit(JobChange.deleted(job.id));
           if (context.mounted) context.pop();
@@ -156,11 +155,17 @@ class _MoreMenu extends ConsumerWidget {
           job.status.isIgnored ? Icons.visibility_outlined : Icons.visibility_off_outlined,
           job.status.isIgnored ? 'Ne plus ignorer' : 'Ignorer cette offre',
         ),
-        if (job.listingUrl != null) item(_MenuAction.copyLink, Icons.link_rounded, 'Copier le lien'),
+        if (job.listingUrl != null)
+          item(_MenuAction.copyLink, Icons.link_rounded, 'Copier le lien'),
         if (isAdmin) ...[
           const PopupMenuDivider(),
           item(_MenuAction.raw, Icons.data_object_rounded, 'Données brutes'),
-          item(_MenuAction.delete, Icons.delete_outline_rounded, 'Supprimer l\'offre', destructive: true),
+          item(
+            _MenuAction.delete,
+            Icons.delete_outline_rounded,
+            'Supprimer l\'offre',
+            destructive: true,
+          ),
         ],
       ],
     );
@@ -294,16 +299,36 @@ class _DetailBody extends ConsumerWidget {
         const SectionHeader('Dates'),
         _Rows(
           rows: [
-            (Icons.event_outlined, 'Publiée le', job.publishedAt == null ? null : Fmt.date(job.publishedAt), null),
-            (Icons.event_busy_outlined, 'Expire le', job.expiresAt == null ? null : Fmt.date(job.expiresAt), null),
-            (Icons.download_outlined, 'Collectée le', job.scrapedAt == null ? null : Fmt.dateTime(job.scrapedAt), null),
+            (
+              Icons.event_outlined,
+              'Publiée le',
+              job.publishedAt == null ? null : Fmt.date(job.publishedAt),
+              null,
+            ),
+            (
+              Icons.event_busy_outlined,
+              'Expire le',
+              job.expiresAt == null ? null : Fmt.date(job.expiresAt),
+              null,
+            ),
+            (
+              Icons.download_outlined,
+              'Collectée le',
+              job.scrapedAt == null ? null : Fmt.dateTime(job.scrapedAt),
+              null,
+            ),
             (
               Icons.update_rounded,
               'Dernière vérification',
               job.lastCheckedAt == null ? null : Fmt.dateTime(job.lastCheckedAt),
               null,
             ),
-            (Icons.add_circle_outline_rounded, 'Ajoutée le', job.createdAt == null ? null : Fmt.dateTime(job.createdAt), null),
+            (
+              Icons.add_circle_outline_rounded,
+              'Ajoutée le',
+              job.createdAt == null ? null : Fmt.dateTime(job.createdAt),
+              null,
+            ),
           ],
         ),
         if (job.qualityIssues.isNotEmpty) ...[
@@ -331,7 +356,9 @@ class _DetailBody extends ConsumerWidget {
                 const Gap(6),
                 Text(
                   'Informations incomplètes dans l\'annonce d\'origine.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textTertiary),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: AppColors.textTertiary),
                 ),
               ],
             ),
@@ -455,10 +482,7 @@ class _Header extends ConsumerWidget {
             ScoreRing(score: job.score, size: 68, strokeWidth: 5),
           ],
         ),
-        if (pills.isNotEmpty) ...[
-          const Gap(16),
-          Wrap(spacing: 6, runSpacing: 8, children: pills),
-        ],
+        if (pills.isNotEmpty) ...[const Gap(16), Wrap(spacing: 6, runSpacing: 8, children: pills)],
       ],
     );
   }
@@ -559,10 +583,7 @@ class _DescriptionState extends State<_Description> {
           TextButton.icon(
             onPressed: () => setState(() => _expanded = !_expanded),
             style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(44, 44)),
-            icon: Icon(
-              _expanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
-              size: 18,
-            ),
+            icon: Icon(_expanded ? Icons.expand_less_rounded : Icons.expand_more_rounded, size: 18),
             label: Text(_expanded ? 'Réduire' : 'Lire la suite'),
           ),
         if (widget.partial)
@@ -706,7 +727,10 @@ class _CompanySection extends StatelessWidget {
     if (rows.every((row) => row.$3 == null)) return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [const SectionHeader('Entreprise'), _Rows(rows: rows)],
+      children: [
+        const SectionHeader('Entreprise'),
+        _Rows(rows: rows),
+      ],
     );
   }
 }
@@ -718,9 +742,10 @@ class _SourcesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sources = [job.source, ...job.otherSources]
-        .where((s) => s.name != null || s.url != null)
-        .toList();
+    final sources = [
+      job.source,
+      ...job.otherSources,
+    ].where((s) => s.name != null || s.url != null).toList();
     if (sources.isEmpty) return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

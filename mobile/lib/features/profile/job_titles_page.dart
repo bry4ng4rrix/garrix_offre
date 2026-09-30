@@ -50,7 +50,8 @@ class JobTitlesPage extends ConsumerWidget {
                 EmptyState(
                   icon: Icons.badge_outlined,
                   title: 'Aucun poste recherché',
-                  message: 'Ajoutez les intitulés que vous visez (« Développeur Python », '
+                  message:
+                      'Ajoutez les intitulés que vous visez (« Développeur Python », '
                       '« Backend Developer »…) : ils sont comparés au titre de chaque offre.',
                   actionLabel: 'Ajouter un poste',
                   onAction: () => _openSheet(context),
@@ -157,11 +158,7 @@ class _JobTitleSheetState extends ConsumerState<_JobTitleSheet> {
       _error = null;
     });
     final notifier = ref.read(jobTitlesProvider.notifier);
-    final body = {
-      'title': _title.text.trim(),
-      'priority': _priority.apiValue,
-      'enabled': _enabled,
-    };
+    final body = {'title': _title.text.trim(), 'priority': _priority.apiValue, 'enabled': _enabled};
     try {
       _editing ? await notifier.edit(widget.item!.id, body) : await notifier.add(body);
       if (!mounted) return;

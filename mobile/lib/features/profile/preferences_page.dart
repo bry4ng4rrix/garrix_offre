@@ -150,10 +150,7 @@ class _PreferencesFormState extends ConsumerState<_PreferencesForm> {
     final contractTypes = ref.watch(contractTypesProvider);
     final levels = ref.watch(experienceLevelsProvider);
     final hint = theme.bodySmall?.copyWith(color: AppColors.textTertiary);
-    final languageCodes = {
-      ...kLanguages.keys.take(kCommonLanguageCount),
-      ..._languages,
-    }.toList();
+    final languageCodes = {...kLanguages.keys.take(kCommonLanguageCount), ..._languages}.toList();
     final currencies = [...kCurrencies, if (!kCurrencies.contains(_currency)) _currency];
 
     return PopScope(
@@ -202,7 +199,8 @@ class _PreferencesFormState extends ConsumerState<_PreferencesForm> {
                       labelOf: (code) => types
                           .firstWhere(
                             (t) => t.code == code,
-                            orElse: () => ContractType(id: code, code: code, name: code.toUpperCase()),
+                            orElse: () =>
+                                ContractType(id: code, code: code, name: code.toUpperCase()),
                           )
                           .name,
                       onChanged: (value) => setState(() => _contracts = value),
@@ -255,7 +253,10 @@ class _PreferencesFormState extends ConsumerState<_PreferencesForm> {
                 ),
                 if (_locations.isEmpty) ...[
                   const Gap(8),
-                  Text('Aucun lieu : la ville et le pays de votre profil sont utilisés.', style: hint),
+                  Text(
+                    'Aucun lieu : la ville et le pays de votre profil sont utilisés.',
+                    style: hint,
+                  ),
                 ],
 
                 const SectionHeader('Mode de travail'),
@@ -516,7 +517,10 @@ class _LocationSheetState extends State<_LocationSheet> {
       return;
     }
     Navigator.of(context).pop(
-      LocationPreference(city: city.isEmpty ? null : city, country: country.isEmpty ? null : country),
+      LocationPreference(
+        city: city.isEmpty ? null : city,
+        country: country.isEmpty ? null : country,
+      ),
     );
   }
 

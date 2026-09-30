@@ -16,6 +16,10 @@ class JobsRepository {
   Future<Paginated<Job>> search(JobFilters filters, {int page = 1, int pageSize = 20}) =>
       _api.getPage('/jobs', Job.fromJson, page: page, pageSize: pageSize, query: filters.toQuery());
 
+  /// Pays des offres correspondant aux filtres (le filtre pays lui-même est ignoré).
+  Future<List<CountryCount>> countries(JobFilters filters) =>
+      _api.getList('/jobs/countries', CountryCount.fromJson, query: filters.toQuery());
+
   /// Détail complet (le serveur marque l'offre comme vue).
   Future<Job> get(String id) => _api.getObject('/jobs/$id', Job.fromJson);
 

@@ -143,7 +143,8 @@ class _FakeApplications implements ApplicationsRepository {
       _response.copyWith(isRead: data.isRead);
 
   @override
-  dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError('${invocation.memberName}');
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName}');
 }
 
 class _FakeDocuments implements DocumentsRepository {
@@ -162,7 +163,8 @@ class _FakeDocuments implements DocumentsRepository {
   Future<Uint8List> download(UserDocument document) async => Uint8List(0);
 
   @override
-  dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError('${invocation.memberName}');
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName}');
 }
 
 Future<void> _pump(WidgetTester tester, Widget page, _FakeApplications repository) async {
@@ -241,6 +243,7 @@ void main() {
       await tester.ensureVisible(finder);
       await tester.pumpAndSettle();
     }
+
     final confirm = find.text('Je confirme l\'envoi de cette candidature');
 
     await inSheet(confirm);

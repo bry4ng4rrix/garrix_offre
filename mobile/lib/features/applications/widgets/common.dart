@@ -129,7 +129,12 @@ class SheetLayout extends StatelessWidget {
     final list = ListView(
       primary: expand,
       shrinkWrap: !expand,
-      padding: const EdgeInsets.fromLTRB(AppSpacing.page, AppSpacing.sm, AppSpacing.page, AppSpacing.lg),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.page,
+        AppSpacing.sm,
+        AppSpacing.page,
+        AppSpacing.lg,
+      ),
       children: children,
     );
     return SafeArea(
@@ -141,7 +146,12 @@ class SheetLayout extends StatelessWidget {
           SheetHeader(title: title, trailing: trailing),
           if (subtitle != null)
             Padding(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, AppSpacing.sm),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.page,
+                0,
+                AppSpacing.page,
+                AppSpacing.sm,
+              ),
               child: Text(
                 subtitle!,
                 style: Theme.of(

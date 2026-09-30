@@ -21,14 +21,14 @@ class ProfileRepository {
       Profile.fromJson(asJsonMap(await _api.put('/profile', body: body)));
 
   /// Envoie la photo depuis un chemin local, ou depuis ses octets si aucun chemin n'existe.
-  Future<Profile> uploadPhoto({
-    required String filename,
-    String? path,
-    Uint8List? bytes,
-  }) async {
+  Future<Profile> uploadPhoto({required String filename, String? path, Uint8List? bytes}) async {
     final data = path != null
         ? await _api.upload('/profile/photo', filePath: path, filename: filename)
-        : await _api.uploadBytes('/profile/photo', bytes: bytes ?? Uint8List(0), filename: filename);
+        : await _api.uploadBytes(
+            '/profile/photo',
+            bytes: bytes ?? Uint8List(0),
+            filename: filename,
+          );
     return Profile.fromJson(asJsonMap(data));
   }
 
@@ -59,8 +59,7 @@ class ProfileRepository {
 
   // --- Expériences ---
 
-  Future<List<Experience>> listExperiences() =>
-      _api.getList('/experiences', Experience.fromJson);
+  Future<List<Experience>> listExperiences() => _api.getList('/experiences', Experience.fromJson);
 
   Future<Experience> createExperience(ExperienceInput input) async =>
       Experience.fromJson(asJsonMap(await _api.post('/experiences', body: input.toJson())));

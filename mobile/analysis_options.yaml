@@ -26,3 +26,7 @@ linter:
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options
+
+# Largeur de ligne du formateur (dart format), identique à celle du code existant.
+formatter:
+  page_width: 100

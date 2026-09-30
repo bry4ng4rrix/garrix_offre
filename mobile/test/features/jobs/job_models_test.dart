@@ -214,14 +214,16 @@ void main() {
       final query = const JobFilters(
         minScore: 70,
         status: JobStatusFilter.newJob,
-        sourceCategory: SourceCategory.clients,
+        scope: JobScope.missions,
+        countries: ['France', kNoCountry],
         remote: true,
         sortBy: JobSortField.score,
         sortDesc: false,
       ).toQuery();
       expect(query['min_score'], 70);
       expect(query['status'], 'new');
-      expect(query['source_category'], 'clients');
+      expect(query['source_category'], ['clients']);
+      expect(query['country'], ['France', kNoCountry]);
       expect(query['remote'], true);
       expect(query['sort_by'], 'score');
       expect(query['sort_order'], 'asc');
@@ -237,12 +239,30 @@ void main() {
       expect(cleared.activeCount, 2);
     });
 
+    test('offres d\'emploi = catégories jobs + services', () {
+      expect(const JobFilters().toQuery()['source_category'], ['jobs', 'services']);
+      expect(JobScope.of(SourceCategory.clients), JobScope.missions);
+      expect(JobScope.of(SourceCategory.services), JobScope.offers);
+    });
+
+    test('pays : triés, sans doublon, comptés comme un filtre actif', () {
+      final filters = const JobFilters().copyWith(countries: ['France', 'Espagne', 'France']);
+      expect(filters.countries, ['Espagne', 'France']);
+      expect(filters.activeCount, 1);
+      expect(filters, const JobFilters().copyWith(countries: ['France', 'Espagne']));
+      expect(filters.copyWith(countries: []).activeCount, 0);
+      expect(countryLabel(kNoCountry), 'Sans pays (monde)');
+    });
+
+    test('CountryCount : pays absent = sans pays', () {
+      final none = CountryCount.fromJson({'country': null, 'count': 12});
+      expect(none.filterValue, kNoCountry);
+      expect(CountryCount.fromJson({'country': 'France', 'count': 3}).filterValue, 'France');
+    });
+
     test('égalité par valeur (clé de la liste)', () {
       expect(const JobFilters(search: 'dev'), const JobFilters(search: 'dev'));
-      expect(
-        const JobFilters(search: 'dev').hashCode,
-        const JobFilters(search: 'dev').hashCode,
-      );
+      expect(const JobFilters(search: 'dev').hashCode, const JobFilters(search: 'dev').hashCode);
       expect(const JobFilters(search: 'dev') == const JobFilters(search: 'ops'), isFalse);
     });
   });
@@ -305,7 +325,10 @@ void main() {
   });
 
   group('JobLabels', () {
-    const labels = JobLabels(contracts: {'cdi': 'CDI', 'custom': 'Mission'}, levels: {'mid': 'Confirmé'});
+    const labels = JobLabels(
+      contracts: {'cdi': 'CDI', 'custom': 'Mission'},
+      levels: {'mid': 'Confirmé'},
+    );
 
     test('contrats et niveaux', () {
       expect(labels.contract('full_time'), 'Temps plein');

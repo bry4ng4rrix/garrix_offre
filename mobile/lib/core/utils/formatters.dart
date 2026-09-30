@@ -43,7 +43,8 @@ abstract final class Fmt {
   /// Salaire : `45 k – 55 k EUR / an`, `600 EUR / jour`.
   static String salary({num? min, num? max, String? currency, String? period, String? raw}) {
     if (min == null && max == null) return raw?.trim().isNotEmpty == true ? raw!.trim() : '—';
-    String amount(num v) => v >= 10000 ? '${_number.format((v / 1000).round())} k' : _number.format(v);
+    String amount(num v) =>
+        v >= 10000 ? '${_number.format((v / 1000).round())} k' : _number.format(v);
     final range = min != null && max != null && min != max
         ? '${amount(min)} – ${amount(max)}'
         : amount((min ?? max)!);

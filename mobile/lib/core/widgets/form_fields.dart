@@ -142,7 +142,9 @@ abstract final class Validators {
   static String? optionalUrl(String? value) {
     if (value == null || value.trim().isEmpty) return null;
     final uri = Uri.tryParse(value.trim());
-    return (uri != null && uri.hasScheme && uri.host.isNotEmpty) ? null : 'URL invalide (https://...)';
+    return (uri != null && uri.hasScheme && uri.host.isNotEmpty)
+        ? null
+        : 'URL invalide (https://...)';
   }
 
   static String? optionalInt(String? value) {
@@ -366,7 +368,10 @@ class SwitchRow extends StatelessWidget {
                 children: [
                   Text(title, style: theme.bodyLarge),
                   if (subtitle != null)
-                    Text(subtitle!, style: theme.bodySmall?.copyWith(color: AppColors.textTertiary)),
+                    Text(
+                      subtitle!,
+                      style: theme.bodySmall?.copyWith(color: AppColors.textTertiary),
+                    ),
                 ],
               ),
             ),

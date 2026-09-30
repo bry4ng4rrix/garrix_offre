@@ -10,6 +10,7 @@ from app.core.exceptions import BusinessRuleError
 from app.modules.jobs.dependencies import get_job_service, job_filters
 from app.modules.jobs.repository import JobFilters
 from app.modules.jobs.schemas import (
+    CountryCount,
     JobCreate,
     JobRawRead,
     JobRead,
@@ -34,8 +35,9 @@ Filters = Annotated[JobFilters, Depends(job_filters)]
     "",
     response_model=ApiResponse[Page[JobRead]],
     summary="Rechercher des offres",
-    description="Filtres combinables : search, min_score, contract_type, remote, location, skill, "
-    "company, experience_level, source, status, published_after, published_before. "
+    description="Filtres combinables : search, min_score, contract_type, remote, location, "
+    "country (répétable), skill, company, experience_level, source, source_category "
+    "(répétable), status, published_after, published_before. "
     "Tri : sort_by=published_at|created_at|score|title et sort_order=asc|desc. "
     "La description complète n'est incluse qu'avec include_description=true.",
     responses=error_responses(401, 422),
@@ -49,6 +51,18 @@ def list_jobs(
 ):
     items, total = service.list_jobs(user, filters, pagination, include_description)
     return ok(build_page(items, total, pagination))
+
+
+@router.get(
+    "/countries",
+    response_model=ApiResponse[list[CountryCount]],
+    summary="Pays des offres (pour le filtre pays)",
+    description="Nombre d'offres par pays, avec les mêmes filtres que GET /jobs (le filtre "
+    "`country` lui-même est ignoré). `country: null` = offres sans pays. Tri : plus fréquent d'abord.",
+    responses=error_responses(401, 422),
+)
+def list_job_countries(user: CurrentUser, service: Service, filters: Filters):
+    return ok(service.country_counts(user, filters))
 
 
 @router.post(

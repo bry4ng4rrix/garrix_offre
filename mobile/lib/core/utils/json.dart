@@ -26,8 +26,9 @@ List<String> parseStringList(Object? value) =>
 Map<String, dynamic> parseMap(Object? value) =>
     value is Map ? value.cast<String, dynamic>() : const {};
 
-List<Map<String, dynamic>> parseMapList(Object? value) =>
-    value is List ? value.whereType<Map>().map((e) => e.cast<String, dynamic>()).toList() : const [];
+List<Map<String, dynamic>> parseMapList(Object? value) => value is List
+    ? value.whereType<Map>().map((e) => e.cast<String, dynamic>()).toList()
+    : const [];
 
 /// Date seule au format API (`2026-09-30`).
 String formatApiDate(DateTime date) =>

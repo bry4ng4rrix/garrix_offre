@@ -36,9 +36,7 @@ class ApiClient {
     );
     _dio = Dio(options);
     _refreshDio = Dio(options);
-    _dio.interceptors.add(
-      InterceptorsWrapper(onRequest: _onRequest, onError: _onError),
-    );
+    _dio.interceptors.add(InterceptorsWrapper(onRequest: _onRequest, onError: _onError));
   }
 
   final String serverUrl;

@@ -32,10 +32,8 @@ class AppShell extends ConsumerWidget {
 
   static const wideBreakpoint = 840.0;
 
-  void _go(int index) => navigationShell.goBranch(
-    index,
-    initialLocation: index == navigationShell.currentIndex,
-  );
+  void _go(int index) =>
+      navigationShell.goBranch(index, initialLocation: index == navigationShell.currentIndex);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

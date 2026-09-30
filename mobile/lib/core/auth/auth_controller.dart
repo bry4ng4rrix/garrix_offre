@@ -104,9 +104,7 @@ class AuthController extends Notifier<AuthState> {
 
   Future<AppUser> _fetchMe() async {
     final user = AppUser.fromJson(asJsonMap(await _api.get('/auth/me')));
-    await ref
-        .read(sharedPreferencesProvider)
-        .setString(_cachedUserKey, jsonEncode(user.toJson()));
+    await ref.read(sharedPreferencesProvider).setString(_cachedUserKey, jsonEncode(user.toJson()));
     return user;
   }
 

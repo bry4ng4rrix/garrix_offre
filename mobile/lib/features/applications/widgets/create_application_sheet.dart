@@ -93,7 +93,8 @@ class _CreateApplicationSheetState extends ConsumerState<CreateApplicationSheet>
       key: _form,
       child: SheetLayout(
         title: 'Nouvelle candidature',
-        subtitle: 'Pour une offre vue ailleurs ou une candidature spontanée. '
+        subtitle:
+            'Pour une offre vue ailleurs ou une candidature spontanée. '
             'Depuis une offre, utilisez plutôt « Postuler ».',
         expand: true,
         footer: PrimaryButton(label: 'Créer', loading: _loading, onPressed: _create),

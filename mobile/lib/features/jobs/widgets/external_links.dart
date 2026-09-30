@@ -18,8 +18,10 @@ Future<void> openExternalUrl(String url) async {
 }
 
 /// Ouvre l'application de messagerie.
-Future<void> openEmail(String email) =>
-    _launchOrCopy(Uri(scheme: 'mailto', path: email.trim()), fallback: email.trim());
+Future<void> openEmail(String email) => _launchOrCopy(
+  Uri(scheme: 'mailto', path: email.trim()),
+  fallback: email.trim(),
+);
 
 /// Lance un appel (ou copie le numéro si l'appareil ne sait pas appeler).
 Future<void> openPhone(String phone) => _launchOrCopy(
@@ -41,6 +43,9 @@ Future<void> _launchOrCopy(Uri uri, {required String fallback}) async {
     opened = false;
   }
   if (!opened) {
-    await copyText(fallback, message: 'Impossible d\'ouvrir le lien : copié dans le presse-papiers');
+    await copyText(
+      fallback,
+      message: 'Impossible d\'ouvrir le lien : copié dans le presse-papiers',
+    );
   }
 }

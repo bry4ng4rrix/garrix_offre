@@ -146,10 +146,7 @@ class _UploadDocumentSheetState extends ConsumerState<UploadDocumentSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (_loading && _progress != null) ...[
-              ThinProgress(value: _progress!),
-              const Gap(10),
-            ],
+            if (_loading && _progress != null) ...[ThinProgress(value: _progress!), const Gap(10)],
             PrimaryButton(
               label: _loading && _progress != null
                   ? 'Envoi... ${(_progress! * 100).round()} %'
@@ -217,7 +214,11 @@ class _UploadDocumentSheetState extends ConsumerState<UploadDocumentSheet> {
           ),
           if (_error != null) ...[
             const Gap(12),
-            NoticeBanner(message: _error!, color: AppColors.danger, icon: Icons.error_outline_rounded),
+            NoticeBanner(
+              message: _error!,
+              color: AppColors.danger,
+              icon: Icons.error_outline_rounded,
+            ),
           ],
           const Gap(8),
           Text(

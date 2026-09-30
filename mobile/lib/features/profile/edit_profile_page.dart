@@ -93,8 +93,20 @@ class _EditProfileFormState extends ConsumerState<_EditProfileForm> {
   bool _uploading = false;
 
   List<TextEditingController> get _controllers => [
-    _firstName, _lastName, _title, _bio, _email, _phone, _city, _country, _address,
-    _linkedin, _github, _portfolio, _years, _salary,
+    _firstName,
+    _lastName,
+    _title,
+    _bio,
+    _email,
+    _phone,
+    _city,
+    _country,
+    _address,
+    _linkedin,
+    _github,
+    _portfolio,
+    _years,
+    _salary,
   ];
 
   @override
@@ -221,7 +233,9 @@ class _EditProfileFormState extends ConsumerState<_EditProfileForm> {
   void _addLanguage() {
     final used = _languages.map((l) => l.code).toSet();
     final code = kLanguages.keys.firstWhere((c) => !used.contains(c), orElse: () => 'en');
-    setState(() => _languages.add(_LanguageRow(_nextLanguageKey++, code, LanguageLevel.intermediate)));
+    setState(
+      () => _languages.add(_LanguageRow(_nextLanguageKey++, code, LanguageLevel.intermediate)),
+    );
   }
 
   @override
@@ -261,11 +275,7 @@ class _EditProfileFormState extends ConsumerState<_EditProfileForm> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const Gap(AppSpacing.sm),
-                  _PhotoSection(
-                    busy: _uploading,
-                    onPick: _pickPhoto,
-                    onDelete: _deletePhoto,
-                  ),
+                  _PhotoSection(busy: _uploading, onPick: _pickPhoto, onDelete: _deletePhoto),
 
                   const SectionHeader('Identité'),
                   Row(
@@ -327,7 +337,8 @@ class _EditProfileFormState extends ConsumerState<_EditProfileForm> {
                     prefixIcon: Icons.phone_outlined,
                     keyboardType: TextInputType.phone,
                     textInputAction: TextInputAction.next,
-                    validator: (v) => (v == null || v.trim().isEmpty || _phonePattern.hasMatch(v.trim()))
+                    validator: (v) =>
+                        (v == null || v.trim().isEmpty || _phonePattern.hasMatch(v.trim()))
                         ? null
                         : 'Numéro invalide',
                   ),

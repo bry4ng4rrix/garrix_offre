@@ -93,10 +93,7 @@ class _MatchSectionState extends ConsumerState<MatchSection> {
                     ),
             ],
           ),
-          _Breakdown(
-            value: detail,
-            onRetry: () => ref.invalidate(jobMatchProvider(job.id)),
-          ),
+          _Breakdown(value: detail, onRetry: () => ref.invalidate(jobMatchProvider(job.id))),
           if (matching != null && matching.matchedSkills.isNotEmpty) ...[
             const Gap(20),
             const _Label('Compétences correspondantes'),

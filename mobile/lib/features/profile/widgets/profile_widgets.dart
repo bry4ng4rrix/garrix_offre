@@ -149,9 +149,7 @@ class LevelSelector extends StatelessWidget {
               color: level == value ? AppColors.surfaceHighest : AppColors.surface,
               shape: RoundedRectangleBorder(
                 borderRadius: AppRadius.input,
-                side: BorderSide(
-                  color: level == value ? AppColors.textPrimary : AppColors.border,
-                ),
+                side: BorderSide(color: level == value ? AppColors.textPrimary : AppColors.border),
               ),
               child: InkWell(
                 borderRadius: AppRadius.input,
@@ -260,7 +258,12 @@ class FormSheet extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(AppSpacing.page, AppSpacing.lg, AppSpacing.page, AppSpacing.lg),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.page,
+            AppSpacing.lg,
+            AppSpacing.page,
+            AppSpacing.lg,
+          ),
           child: Row(
             children: [
               for (var i = 0; i < actions.length; i++) ...[

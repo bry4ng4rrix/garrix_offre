@@ -3,7 +3,8 @@ from datetime import datetime
 from fastapi import Query
 
 from app.api.dependencies import DbSession
-from app.modules.jobs.repository import JobFilters
+from app.core.exceptions import BadRequestError
+from app.modules.jobs.repository import NO_COUNTRY, JobFilters
 from app.modules.jobs.schemas import JobSortField, JobStatusFilter
 from app.modules.jobs.service import JobService
 from app.shared.enums import SourceCategory
@@ -27,8 +28,15 @@ def job_filters(
     company: str | None = Query(None, max_length=200, description="Nom ou id d'entreprise"),
     experience_level: str | None = Query(None, max_length=40, description="junior, mid, senior..."),
     source: str | None = Query(None, max_length=150, description="Nom ou id de source"),
-    source_category: SourceCategory | None = Query(
-        None, description="jobs (emplois), clients (missions freelance), services (API d'offres)"
+    source_category: list[SourceCategory] | None = Query(
+        None,
+        description="jobs (emplois), clients (missions freelance), services (API d'offres). "
+        "Répétable : ?source_category=jobs&source_category=services",
+    ),
+    country: list[str] | None = Query(
+        None,
+        description=f"Pays de l'offre (ex. France), répétable. {NO_COUNTRY!r} = offres sans pays "
+        "(souvent du télétravail mondial). La liste des pays : GET /jobs/countries",
     ),
     status: JobStatusFilter | None = Query(
         None, description="Par défaut : offres NEW/ACTIVE non ignorées"
@@ -50,9 +58,18 @@ def job_filters(
         experience_level=experience_level,
         source=source,
         source_category=source_category,
+        country=_checked_countries(country),
         status=status,
         published_after=published_after,
         published_before=published_before,
         sort_by=sort_by,
         sort_desc=sort_order == "desc",
     )
+
+
+def _checked_countries(values: list[str] | None) -> list[str] | None:
+    if not values:
+        return None
+    if len(values) > 50 or any(len(value) > 100 for value in values):
+        raise BadRequestError("Too many or too long country values", code="INVALID_COUNTRY_FILTER")
+    return values

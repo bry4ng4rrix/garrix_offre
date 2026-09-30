@@ -268,7 +268,9 @@ class PipelineCard extends ConsumerWidget {
                   label: 'Taux de réponse',
                 ),
               ),
-              Expanded(child: _Metric(value: Fmt.number(s.interviews), label: 'Entretiens')),
+              Expanded(
+                child: _Metric(value: Fmt.number(s.interviews), label: 'Entretiens'),
+              ),
               Expanded(
                 child: _Metric(
                   value: Fmt.number(s.offers),
@@ -489,10 +491,7 @@ class _InlineError extends StatelessWidget {
         const Icon(Icons.error_outline_rounded, size: 18, color: AppColors.danger),
         const Gap(10),
         Expanded(
-          child: Text(
-            ApiException.describe(error),
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
+          child: Text(ApiException.describe(error), style: Theme.of(context).textTheme.bodySmall),
         ),
         TextButton(onPressed: onRetry, child: const Text('Réessayer')),
       ],

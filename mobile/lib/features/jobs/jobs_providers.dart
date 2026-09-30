@@ -5,17 +5,23 @@ import 'data/job_filters.dart';
 import 'data/job_models.dart';
 import 'data/jobs_repository.dart';
 
-/// Filtres de la liste des offres, gardés en mémoire entre les changements d'onglet.
+/// Filtres d'un sous-onglet (offres d'emploi ou missions freelance), gardés en mémoire
+/// entre les changements d'onglet.
 class JobFiltersNotifier extends Notifier<JobFilters> {
-  @override
-  JobFilters build() => const JobFilters();
+  JobFiltersNotifier(this.scope);
 
-  void set(JobFilters filters) => state = filters;
+  final JobScope scope;
+
+  @override
+  JobFilters build() => JobFilters(scope: scope);
+
+  void set(JobFilters filters) => state = filters.copyWith(scope: scope);
 
   void setSearch(String? value) => state = state.copyWith(search: value);
 
   /// Réinitialise tous les filtres (la recherche texte et le tri sont conservés).
   void resetFilters() => state = JobFilters(
+    scope: scope,
     search: state.search,
     sortBy: state.sortBy,
     sortDesc: state.sortDesc,
@@ -23,14 +29,32 @@ class JobFiltersNotifier extends Notifier<JobFilters> {
 
   /// Affiche les meilleures offres (score minimum = seuil de l'utilisateur, tri par score).
   void showBestMatches(int threshold) => state = JobFilters(
+    scope: scope,
     minScore: threshold,
     sortBy: JobSortField.score,
     sortDesc: true,
   );
 }
 
-final jobFiltersProvider = NotifierProvider<JobFiltersNotifier, JobFilters>(
+final jobFiltersProvider = NotifierProvider.family<JobFiltersNotifier, JobFilters, JobScope>(
   JobFiltersNotifier.new,
+);
+
+/// Sous-onglet affiché dans la page Offres (modifiable depuis l'accueil ou les alertes).
+class SelectedJobScopeNotifier extends Notifier<JobScope> {
+  @override
+  JobScope build() => JobScope.offers;
+
+  void select(JobScope scope) => state = scope;
+}
+
+final selectedJobScopeProvider = NotifierProvider<SelectedJobScopeNotifier, JobScope>(
+  SelectedJobScopeNotifier.new,
+);
+
+/// Pays disponibles (avec leur nombre d'offres) pour les autres filtres du sous-onglet.
+final jobCountriesProvider = FutureProvider.autoDispose.family<List<CountryCount>, JobFilters>(
+  (ref, filters) => ref.watch(jobsRepositoryProvider).countries(filters.copyWith(countries: [])),
 );
 
 /// Modification d'une offre faite ailleurs (détail, formulaire) à répercuter sur les listes.
@@ -55,9 +79,7 @@ class JobChangesNotifier extends Notifier<JobChange?> {
 }
 
 /// Flux des modifications d'offres (à écouter avec `ref.listen`).
-final jobChangesProvider = NotifierProvider<JobChangesNotifier, JobChange?>(
-  JobChangesNotifier.new,
-);
+final jobChangesProvider = NotifierProvider<JobChangesNotifier, JobChange?>(JobChangesNotifier.new);
 
 /// Détail d'une offre, modifiable sur place (sauvegarde, ignorer, score).
 class JobDetailNotifier extends AsyncNotifier<Job> {
@@ -122,8 +144,9 @@ class JobDetailNotifier extends AsyncNotifier<Job> {
   }
 }
 
-final jobDetailProvider = AsyncNotifierProvider.autoDispose
-    .family<JobDetailNotifier, Job, String>(JobDetailNotifier.new);
+final jobDetailProvider = AsyncNotifierProvider.autoDispose.family<JobDetailNotifier, Job, String>(
+  JobDetailNotifier.new,
+);
 
 /// Détail du matching par critère (`POST /jobs/{id}/match` : recalcule puis renvoie le détail).
 final jobMatchProvider = FutureProvider.autoDispose.family<MatchResult, String>(

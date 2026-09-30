@@ -110,7 +110,8 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
     final ok = await confirmDialog(
       context,
       title: 'Supprimer « ${document.title} » ?',
-      message: 'Le fichier sera définitivement supprimé. Les candidatures qui l\'utilisent '
+      message:
+          'Le fichier sera définitivement supprimé. Les candidatures qui l\'utilisent '
           'n\'auront plus ce document.',
       confirmLabel: 'Supprimer',
       destructive: true,

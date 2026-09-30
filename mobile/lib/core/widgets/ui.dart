@@ -430,14 +430,21 @@ class MenuTile extends StatelessWidget {
                 color: AppColors.surfaceHigh,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, size: 19, color: destructive ? AppColors.danger : AppColors.textSecondary),
+              child: Icon(
+                icon,
+                size: 19,
+                color: destructive ? AppColors.danger : AppColors.textSecondary,
+              ),
             ),
             const Gap(14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: theme.bodyLarge?.copyWith(color: color, fontWeight: FontWeight.w500)),
+                  Text(
+                    title,
+                    style: theme.bodyLarge?.copyWith(color: color, fontWeight: FontWeight.w500),
+                  ),
                   if (subtitle != null)
                     Text(
                       subtitle!,
@@ -503,10 +510,7 @@ class AppAvatar extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: const BoxDecoration(
-        color: AppColors.surfaceHighest,
-        shape: BoxShape.circle,
-      ),
+      decoration: const BoxDecoration(color: AppColors.surfaceHighest, shape: BoxShape.circle),
       clipBehavior: Clip.antiAlias,
       child: imageUrl == null
           ? fallback
@@ -608,10 +612,7 @@ class LoadingView extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
     padding: padding,
     child: const Center(
-      child: SizedBox.square(
-        dimension: 22,
-        child: CircularProgressIndicator(strokeWidth: 2),
-      ),
+      child: SizedBox.square(dimension: 22, child: CircularProgressIndicator(strokeWidth: 2)),
     ),
   );
 }

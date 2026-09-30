@@ -390,12 +390,7 @@ class _Summary extends ConsumerWidget {
 }
 
 class _Line extends StatelessWidget {
-  const _Line({
-    required this.icon,
-    required this.label,
-    required this.value,
-    this.warning = false,
-  });
+  const _Line({required this.icon, required this.label, required this.value, this.warning = false});
 
   final IconData icon;
   final String label;

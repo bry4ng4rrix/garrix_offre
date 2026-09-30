@@ -124,11 +124,7 @@ class _ApplicationsPageState extends ConsumerState<ApplicationsPage> {
         header: [
           _StatsStrip(stats: stats.value, onTapResponses: _openResponses),
           const Gap(16),
-          _StatusFilter(
-            selected: _filter,
-            stats: stats.value,
-            onSelected: _setFilter,
-          ),
+          _StatusFilter(selected: _filter, stats: stats.value, onSelected: _setFilter),
           const Gap(14),
         ],
         itemBuilder: (context, application) =>
@@ -137,7 +133,8 @@ class _ApplicationsPageState extends ConsumerState<ApplicationsPage> {
             ? EmptyState(
                 icon: Icons.send_outlined,
                 title: 'Aucune candidature',
-                message: 'Depuis une offre, touchez « Postuler », ou créez une candidature '
+                message:
+                    'Depuis une offre, touchez « Postuler », ou créez une candidature '
                     'pour une offre vue ailleurs.',
                 actionLabel: 'Nouvelle candidature',
                 onAction: _create,
@@ -166,7 +163,8 @@ class _StatsStrip extends StatelessWidget {
     final s = stats;
     String value(num? n) => s == null ? '—' : Fmt.number(n);
     final extras = <String>[
-      if (s != null && s.offers > 0) '${s.offers} offre${s.offers > 1 ? 's' : ''} reçue${s.offers > 1 ? 's' : ''}',
+      if (s != null && s.offers > 0)
+        '${s.offers} offre${s.offers > 1 ? 's' : ''} reçue${s.offers > 1 ? 's' : ''}',
       if (s?.averageResponseDays != null)
         'réponse en ${Fmt.number(s!.averageResponseDays)} j en moyenne',
     ];

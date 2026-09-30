@@ -135,9 +135,17 @@ class GenerateKindSheet extends ConsumerWidget {
   const GenerateKindSheet({super.key});
 
   static const _kinds = [
-    (GenerationKind.coverLetter, Icons.article_outlined, 'Remplace le brouillon si vous le reprenez'),
+    (
+      GenerationKind.coverLetter,
+      Icons.article_outlined,
+      'Remplace le brouillon si vous le reprenez',
+    ),
     (GenerationKind.applicationEmail, Icons.mail_outline_rounded, 'Objet et message d\'envoi'),
-    (GenerationKind.jobSummary, Icons.summarize_outlined, 'L\'essentiel de l\'offre en quelques lignes'),
+    (
+      GenerationKind.jobSummary,
+      Icons.summarize_outlined,
+      'L\'essentiel de l\'offre en quelques lignes',
+    ),
   ];
 
   @override
@@ -148,7 +156,8 @@ class GenerateKindSheet extends ConsumerWidget {
       children: [
         if (ai != null && !ai.enabled) ...[
           const NoticeBanner(
-            message: 'IA non configurée : le texte sera créé à partir d\'un modèle, '
+            message:
+                'IA non configurée : le texte sera créé à partir d\'un modèle, '
                 'à personnaliser ensuite.',
           ),
           const Gap(12),

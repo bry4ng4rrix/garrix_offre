@@ -125,10 +125,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           onPressed: () => setState(() => _obscure = !_obscure),
                         ),
                       ),
-                      if (_error != null) ...[
-                        const Gap(16),
-                        _ErrorBanner(message: _error!),
-                      ],
+                      if (_error != null) ...[const Gap(16), _ErrorBanner(message: _error!)],
                       const Gap(28),
                       PrimaryButton(
                         label: _registerMode ? 'Créer mon compte' : 'Se connecter',
@@ -155,15 +152,17 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       const Gap(8),
                       InkWell(
                         borderRadius: AppRadius.input,
-                        onTap: () => showAppSheet<void>(
-                          context,
-                          builder: (_) => const ServerSheet(),
-                        ),
+                        onTap: () =>
+                            showAppSheet<void>(context, builder: (_) => const ServerSheet()),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           child: Row(
                             children: [
-                              const Icon(Icons.dns_outlined, size: 18, color: AppColors.textTertiary),
+                              const Icon(
+                                Icons.dns_outlined,
+                                size: 18,
+                                color: AppColors.textTertiary,
+                              ),
                               const Gap(10),
                               Expanded(
                                 child: Text(

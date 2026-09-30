@@ -156,10 +156,8 @@ Future<T?> showAppSheet<T>(
         initialChildSize: 0.9,
         minChildSize: 0.5,
         maxChildSize: 0.95,
-        builder: (context, controller) => PrimaryScrollController(
-          controller: controller,
-          child: content,
-        ),
+        builder: (context, controller) =>
+            PrimaryScrollController(controller: controller, child: content),
       );
     },
   );

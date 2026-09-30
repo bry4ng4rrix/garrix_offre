@@ -84,7 +84,12 @@ class SkillCategory {
 
 /// Compétence du catalogue (`CatalogSkillRead`).
 class CatalogSkill {
-  const CatalogSkill({required this.id, required this.name, this.category, this.aliases = const []});
+  const CatalogSkill({
+    required this.id,
+    required this.name,
+    this.category,
+    this.aliases = const [],
+  });
 
   final String id;
   final String name;
@@ -115,7 +120,9 @@ class AiStatus {
 
 /// Types de contrat actifs, triés.
 final contractTypesProvider = FutureProvider<List<ContractType>>((ref) async {
-  final items = await ref.watch(apiClientProvider).getList('/contract-types', ContractType.fromJson);
+  final items = await ref
+      .watch(apiClientProvider)
+      .getList('/contract-types', ContractType.fromJson);
   return items..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
 });
 

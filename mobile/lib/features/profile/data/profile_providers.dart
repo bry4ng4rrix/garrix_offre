@@ -333,7 +333,6 @@ class MatchingSettingsNotifier extends AsyncNotifier<MatchingSettings> {
   }
 }
 
-final matchingSettingsProvider =
-    AsyncNotifierProvider<MatchingSettingsNotifier, MatchingSettings>(
-      MatchingSettingsNotifier.new,
-    );
+final matchingSettingsProvider = AsyncNotifierProvider<MatchingSettingsNotifier, MatchingSettings>(
+  MatchingSettingsNotifier.new,
+);

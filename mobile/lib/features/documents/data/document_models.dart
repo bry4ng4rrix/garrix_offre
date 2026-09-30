@@ -52,7 +52,8 @@ class UserDocument {
   /// Chemin de téléchargement (sans `/api/v1`).
   String get downloadPath => '/documents/$id/download';
 
-  bool get isImage => type == DocumentType.photo || const {'png', 'jpg', 'jpeg', 'webp'}.contains(extension);
+  bool get isImage =>
+      type == DocumentType.photo || const {'png', 'jpg', 'jpeg', 'webp'}.contains(extension);
 
   /// Nom de fichier sûr pour l'enregistrement local.
   String get safeFilename {
@@ -75,11 +76,7 @@ bool isExtensionAllowed(DocumentType type, String filename) =>
     kAllowedExtensions[type]!.contains(_extensionOf(filename));
 
 /// Langues proposées pour un document (code ISO 639-1 accepté par l'API).
-const kDocumentLanguages = <String, String>{
-  'fr': 'Français',
-  'en': 'Anglais',
-  'mg': 'Malgache',
-};
+const kDocumentLanguages = <String, String>{'fr': 'Français', 'en': 'Anglais', 'mg': 'Malgache'};
 
 String languageLabel(String code) => kDocumentLanguages[code] ?? code.toUpperCase();
 

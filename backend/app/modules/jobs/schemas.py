@@ -224,3 +224,10 @@ class MaintenanceResult(BaseModel):
     expired: int
     archived: int
     stale_runs_failed: int = 0
+
+
+class CountryCount(BaseModel):
+    """Nombre d'offres pour un pays (`country` null = offres sans pays)."""
+
+    country: str | None
+    count: int

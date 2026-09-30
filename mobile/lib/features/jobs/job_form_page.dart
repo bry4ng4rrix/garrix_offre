@@ -423,7 +423,9 @@ class _JobFormPageState extends ConsumerState<JobFormPage> {
                     height: 50,
                     child: OutlinedButton(
                       onPressed: _addSkill,
-                      style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 16)),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                      ),
                       child: const Text('Ajouter'),
                     ),
                   ),

@@ -1,5 +1,6 @@
 import '../../../core/models/enums.dart';
 import '../../../core/utils/json.dart';
+import 'job_filters.dart';
 
 /// Modèles de l'API des offres (`JobRead` et ses blocs, résultats de matching, analyse IA).
 
@@ -350,10 +351,9 @@ class Job {
     contract: JobContract.fromJson(parseMap(json['contract'])),
     salary: JobSalary.fromJson(parseMap(json['salary'])),
     experience: JobExperience.fromJson(parseMap(json['experience'])),
-    skills: parseMapList(json['skills'])
-        .map(JobSkill.fromJson)
-        .where((skill) => skill.name.isNotEmpty)
-        .toList(),
+    skills: parseMapList(
+      json['skills'],
+    ).map(JobSkill.fromJson).where((skill) => skill.name.isNotEmpty).toList(),
     languages: parseStringList(json['languages']),
     matching: json['matching'] is Map ? JobMatching.fromJson(parseMap(json['matching'])) : null,
     application: JobApplyInfo.fromJson(parseMap(json['application'])),
@@ -453,7 +453,12 @@ class JobStateUpdate {
 
 /// Sous-score d'un critère de matching (`breakdown`).
 class MatchCriterion {
-  const MatchCriterion({required this.key, required this.score, required this.weight, this.matched});
+  const MatchCriterion({
+    required this.key,
+    required this.score,
+    required this.weight,
+    this.matched,
+  });
 
   /// `skills`, `experience`, `title`, `contract`, `location`, `salary`, `language`, `experience_level`.
   final String key;
@@ -624,4 +629,23 @@ class JobRaw {
     qualityIssues: parseStringList(json['quality_issues']),
     sources: parseMapList(json['sources']).map(JobSource.fromJson).toList(),
   );
+}
+
+/// Nombre d'offres pour un pays (`GET /jobs/countries`) ; [country] null = offres sans pays.
+class CountryCount {
+  const CountryCount({required this.country, required this.count});
+
+  final String? country;
+  final int count;
+
+  /// Valeur à envoyer dans le filtre `country` ([kNoCountry] pour « sans pays »).
+  String get filterValue => country ?? kNoCountry;
+
+  factory CountryCount.fromJson(Map<String, dynamic> json) {
+    final country = (json['country'] as String?)?.trim();
+    return CountryCount(
+      country: country == null || country.isEmpty ? null : country,
+      count: parseInt(json['count']) ?? 0,
+    );
+  }
 }

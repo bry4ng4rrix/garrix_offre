@@ -1,5 +1,5 @@
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 from typing import Any
 
@@ -18,6 +18,9 @@ from app.shared.utils import normalize_text
 
 VISIBLE_STATUSES = (JobStatus.NEW, JobStatus.ACTIVE)
 
+# Valeur spéciale du filtre pays : offres sans pays (souvent du télétravail mondial).
+NO_COUNTRY = "none"
+
 
 @dataclass
 class JobFilters:
@@ -32,7 +35,11 @@ class JobFilters:
     company: str | None = None
     experience_level: str | None = None
     source: str | None = None
-    source_category: SourceCategory | None = None
+    # Plusieurs catégories possibles : ex. jobs + services pour les offres d'emploi,
+    # clients seul pour les missions freelance.
+    source_category: list[SourceCategory] | None = None
+    # Pays (insensible à la casse) ; NO_COUNTRY = offres sans pays.
+    country: list[str] | None = None
     status: JobStatusFilter | None = None
     published_after: datetime | None = None
     published_before: datetime | None = None
@@ -113,9 +120,11 @@ class JobRepository(BaseRepository[Job]):
                 exists().where(
                     JobSource.job_id == Job.id,
                     JobSource.source_id == Source.id,
-                    Source.category == filters.source_category,
+                    Source.category.in_(filters.source_category),
                 )
             )
+        if filters.country:
+            stmt = stmt.where(self._country_condition(filters.country))
         if filters.published_after:
             stmt = stmt.where(Job.published_at >= filters.published_after)
         if filters.published_before:
@@ -123,6 +132,34 @@ class JobRepository(BaseRepository[Job]):
 
         stmt = stmt.where(*self._status_conditions(user_id, filters.status))
         return stmt.order_by(*self._ordering(filters, needs_match))
+
+    @staticmethod
+    def _country_condition(countries: list[str]) -> ColumnElement[bool]:
+        names = [c.strip().lower() for c in countries if c.strip() and c.strip() != NO_COUNTRY]
+        conditions: list[ColumnElement[bool]] = []
+        if names:
+            conditions.append(func.lower(Job.country).in_(names))
+        if NO_COUNTRY in (c.strip() for c in countries):
+            conditions.append(or_(Job.country.is_(None), Job.country == ""))
+        return or_(*conditions) if conditions else Job.id.is_not(None)
+
+    def country_counts(
+        self, user_id: uuid.UUID, filters: JobFilters
+    ) -> list[tuple[str | None, int]]:
+        """Nombre d'offres par pays pour les autres filtres (le filtre pays est ignoré)."""
+        matching_ids = (
+            self.search_query(user_id, replace(filters, country=None))
+            .order_by(None)
+            .with_only_columns(Job.id)
+        )
+        country = func.nullif(Job.country, "")
+        stmt = (
+            select(country, func.count())
+            .where(Job.id.in_(matching_ids))
+            .group_by(country)
+            .order_by(func.count().desc(), country)
+        )
+        return [(name, count) for name, count in self.session.execute(stmt)]
 
     def _status_conditions(
         self, user_id: uuid.UUID, status: JobStatusFilter | None

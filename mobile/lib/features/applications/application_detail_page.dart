@@ -106,7 +106,9 @@ class _ApplicationDetailPageState extends ConsumerState<ApplicationDetailPage> {
       builder: (_) => CvPickerSheet(selectedId: app.cvDocumentId),
     );
     if (picked == null || picked.id == app.cvDocumentId) return;
-    final result = await runAction(() => _repository.update(app.id, ApplicationUpdate.cv(picked.id)));
+    final result = await runAction(
+      () => _repository.update(app.id, ApplicationUpdate.cv(picked.id)),
+    );
     _apply(result, success: picked.id == null ? 'CV retiré' : 'CV mis à jour');
   }
 
@@ -196,7 +198,10 @@ class _ApplicationDetailPageState extends ConsumerState<ApplicationDetailPage> {
               itemBuilder: (_) => [
                 const PopupMenuItem(value: _MenuAction.generate, child: Text('Générer un texte')),
                 if (app.jobId == null)
-                  const PopupMenuItem(value: _MenuAction.details, child: Text('Modifier l\'intitulé')),
+                  const PopupMenuItem(
+                    value: _MenuAction.details,
+                    child: Text('Modifier l\'intitulé'),
+                  ),
                 if (app.status.isDraft && app.manualTransitions.isNotEmpty)
                   const PopupMenuItem(value: _MenuAction.status, child: Text('Changer le statut')),
                 if (app.status.isDraft)
@@ -218,10 +223,7 @@ class _ApplicationDetailPageState extends ConsumerState<ApplicationDetailPage> {
             _Header(application: app),
             const Gap(20),
             StatusPipeline(application: app),
-            if (app.job != null) ...[
-              const SectionHeader('Offre'),
-              _JobCard(job: app.job!),
-            ],
+            if (app.job != null) ...[const SectionHeader('Offre'), _JobCard(job: app.job!)],
             if (app.submittedAt != null) ...[
               const SectionHeader('Envoi'),
               _SubmissionCard(application: app),
@@ -258,7 +260,9 @@ class _ApplicationDetailPageState extends ConsumerState<ApplicationDetailPage> {
             _DraftCard(
               icon: Icons.sticky_note_2_outlined,
               title: 'Notes et relance',
-              value: app.followUpAt == null ? null : 'Relance prévue le ${Fmt.date(app.followUpAt)}',
+              value: app.followUpAt == null
+                  ? null
+                  : 'Relance prévue le ${Fmt.date(app.followUpAt)}',
               preview: app.notes,
               placeholder: 'Aucune note',
               onTap: () => _edit(() => NotesSheet(application: app)),
@@ -343,7 +347,11 @@ class _Header extends StatelessWidget {
             children: [
               ApplicationStatusPill(app.status),
               if (app.job?.isExpired == true)
-                const Pill('Offre expirée', color: AppColors.warning, icon: Icons.event_busy_outlined),
+                const Pill(
+                  'Offre expirée',
+                  color: AppColors.warning,
+                  icon: Icons.event_busy_outlined,
+                ),
               if (app.isFollowUpDue())
                 const Pill(
                   'Relance à faire',
@@ -392,7 +400,12 @@ class _JobCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(job.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: theme.titleSmall),
+                    Text(
+                      job.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.titleSmall,
+                    ),
                     Text(
                       'Voir l\'offre',
                       style: theme.bodySmall?.copyWith(color: AppColors.textSecondary),
@@ -446,11 +459,7 @@ class _SubmissionCard extends StatelessWidget {
             value: Fmt.dateTime(app.submittedAt),
           ),
           if (app.submissionMethod != null)
-            InfoRow(
-              icon: Icons.route_outlined,
-              label: 'Moyen',
-              value: app.submissionMethod!.label,
-            ),
+            InfoRow(icon: Icons.route_outlined, label: 'Moyen', value: app.submissionMethod!.label),
           if (app.submissionReference != null)
             InfoRow(
               icon: Icons.tag_rounded,
@@ -533,7 +542,10 @@ class _DraftCard extends StatelessWidget {
                 Text(title, style: theme.labelLarge?.copyWith(fontWeight: FontWeight.w600)),
                 const Gap(3),
                 if (empty)
-                  Text(placeholder, style: theme.bodyMedium?.copyWith(color: AppColors.textTertiary)),
+                  Text(
+                    placeholder,
+                    style: theme.bodyMedium?.copyWith(color: AppColors.textTertiary),
+                  ),
                 if (value != null)
                   Text(
                     value!,

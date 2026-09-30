@@ -11,11 +11,8 @@ import '../job_labels.dart';
 import '../jobs_providers.dart';
 
 /// Ouvre l'analyse de l'offre (`POST /ai/jobs/{id}/analyze`) dans une feuille.
-Future<void> showJobAnalysisSheet(BuildContext context, String jobId) => showAppSheet<void>(
-  context,
-  expand: true,
-  builder: (_) => JobAnalysisSheet(jobId: jobId),
-);
+Future<void> showJobAnalysisSheet(BuildContext context, String jobId) =>
+    showAppSheet<void>(context, expand: true, builder: (_) => JobAnalysisSheet(jobId: jobId));
 
 class JobAnalysisSheet extends ConsumerWidget {
   const JobAnalysisSheet({super.key, required this.jobId});

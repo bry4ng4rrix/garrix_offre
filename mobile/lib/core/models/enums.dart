@@ -159,8 +159,18 @@ enum NotificationType {
   newJob('new_job', 'Nouvelle offre', Icons.work_outline_rounded, AppColors.info),
   highMatch('high_match', 'Offre très compatible', Icons.bolt_rounded, AppColors.success),
   applicationStatus('application_status', 'Candidature', Icons.send_rounded, AppColors.violet),
-  recruiterResponse('recruiter_response', 'Réponse recruteur', Icons.mark_email_unread_outlined, AppColors.warning),
-  scrapingError('scraping_error', 'Erreur de collecte', Icons.error_outline_rounded, AppColors.danger),
+  recruiterResponse(
+    'recruiter_response',
+    'Réponse recruteur',
+    Icons.mark_email_unread_outlined,
+    AppColors.warning,
+  ),
+  scrapingError(
+    'scraping_error',
+    'Erreur de collecte',
+    Icons.error_outline_rounded,
+    AppColors.danger,
+  ),
   system('system', 'Système', Icons.info_outline_rounded, AppColors.textSecondary),
   monitoring('monitoring', 'Monitoring', Icons.monitor_heart_outlined, AppColors.textSecondary);
 

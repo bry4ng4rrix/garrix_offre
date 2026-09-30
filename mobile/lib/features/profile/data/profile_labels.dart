@@ -85,10 +85,7 @@ String durationLabel(DateTime start, DateTime? end) {
   if (months < 1) months = 1;
   final years = months ~/ 12;
   final rest = months % 12;
-  final parts = [
-    if (years > 0) years >= 2 ? '$years ans' : '1 an',
-    if (rest > 0) '$rest mois',
-  ];
+  final parts = [if (years > 0) years >= 2 ? '$years ans' : '1 an', if (rest > 0) '$rest mois'];
   return parts.join(' ');
 }
 

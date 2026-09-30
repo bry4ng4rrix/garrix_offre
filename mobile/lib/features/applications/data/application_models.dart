@@ -409,10 +409,7 @@ class ApplicationUpdate {
 
   /// Intitulé et entreprise (candidature sans offre).
   factory ApplicationUpdate.details({required String jobTitle, required String? companyName}) =>
-      ApplicationUpdate({
-        'job_title': jobTitle.trim(),
-        'company_name': _blankToNull(companyName),
-      });
+      ApplicationUpdate({'job_title': jobTitle.trim(), 'company_name': _blankToNull(companyName)});
 
   factory ApplicationUpdate.cv(String? documentId) =>
       ApplicationUpdate({'cv_document_id': documentId});
@@ -449,10 +446,7 @@ class StatusChange {
   final ApplicationStatus status;
   final String? note;
 
-  Map<String, dynamic> toJson() => {
-    'status': status.apiValue,
-    'note': ?_blankToNull(note),
-  };
+  Map<String, dynamic> toJson() => {'status': status.apiValue, 'note': ?_blankToNull(note)};
 }
 
 /// `POST /applications/{id}/prepare`.

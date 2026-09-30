@@ -22,7 +22,9 @@ class ApiException implements Exception {
     if (code == 'VALIDATION_ERROR') {
       final fields = fieldErrors;
       if (fields.isNotEmpty) {
-        return fields.entries.map((e) => e.key.isEmpty ? e.value : '${e.key} : ${e.value}').join('\n');
+        return fields.entries
+            .map((e) => e.key.isEmpty ? e.value : '${e.key} : ${e.value}')
+            .join('\n');
       }
       return 'Données invalides.';
     }
@@ -62,13 +64,22 @@ class ApiException implements Exception {
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
       case DioExceptionType.transformTimeout:
-        return const ApiException(code: 'TIMEOUT', message: 'Le serveur met trop de temps à répondre.');
+        return const ApiException(
+          code: 'TIMEOUT',
+          message: 'Le serveur met trop de temps à répondre.',
+        );
       case DioExceptionType.connectionError:
-        return const ApiException(code: 'NETWORK_ERROR', message: 'Impossible de joindre le serveur.');
+        return const ApiException(
+          code: 'NETWORK_ERROR',
+          message: 'Impossible de joindre le serveur.',
+        );
       case DioExceptionType.cancel:
         return const ApiException(code: 'CANCELLED', message: 'Requête annulée.');
       case DioExceptionType.badCertificate:
-        return const ApiException(code: 'BAD_CERTIFICATE', message: 'Certificat du serveur invalide.');
+        return const ApiException(
+          code: 'BAD_CERTIFICATE',
+          message: 'Certificat du serveur invalide.',
+        );
       case DioExceptionType.badResponse:
       case DioExceptionType.unknown:
         return ApiException(
@@ -92,11 +103,13 @@ class ApiException implements Exception {
   String toString() => 'ApiException($statusCode, $code, $message)';
 
   static const _messages = <String, String>{
-    'NETWORK_ERROR': 'Impossible de joindre le serveur. Vérifiez votre connexion et l\'adresse du serveur.',
+    'NETWORK_ERROR':
+        'Impossible de joindre le serveur. Vérifiez votre connexion et l\'adresse du serveur.',
     'TIMEOUT': 'Le serveur met trop de temps à répondre.',
     'INVALID_CREDENTIALS': 'Email ou mot de passe incorrect.',
     'ACCOUNT_DISABLED': 'Ce compte est désactivé.',
-    'REGISTRATION_DISABLED': 'Les inscriptions sont fermées. Demandez un compte à l\'administrateur.',
+    'REGISTRATION_DISABLED':
+        'Les inscriptions sont fermées. Demandez un compte à l\'administrateur.',
     'EMAIL_ALREADY_USED': 'Un compte existe déjà avec cet email.',
     'TOKEN_EXPIRED': 'Session expirée. Reconnectez-vous.',
     'TOKEN_REVOKED': 'Session expirée. Reconnectez-vous.',
@@ -131,7 +144,8 @@ class ApiException implements Exception {
     'EXPERIENCE_PREFERENCE_EXISTS': 'Cette technologie est déjà dans votre liste.',
     'SOURCE_DISABLED': 'Cette source est désactivée.',
     'SOURCE_NOT_COLLECTABLE': 'Cette source ne peut pas être collectée par le serveur.',
-    'SOURCE_TERMS_NOT_REVIEWED': 'Les conditions d\'utilisation de la source doivent être vérifiées avant la collecte.',
+    'SOURCE_TERMS_NOT_REVIEWED':
+        'Les conditions d\'utilisation de la source doivent être vérifiées avant la collecte.',
     'SOURCE_TEST_FAILED': 'Le test de la source a échoué.',
     'WORKER_UNAVAILABLE': 'Le service de tâches de fond est indisponible.',
     'SCRAPING_RUN_FINISHED': 'Cette collecte est déjà terminée.',

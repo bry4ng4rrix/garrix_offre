@@ -12,7 +12,9 @@ DioException _dioError({int? status, Object? data, DioExceptionType? type}) {
   return DioException(
     requestOptions: request,
     type: type ?? DioExceptionType.badResponse,
-    response: status == null ? null : Response(requestOptions: request, statusCode: status, data: data),
+    response: status == null
+        ? null
+        : Response(requestOptions: request, statusCode: status, data: data),
   );
 }
 
@@ -97,7 +99,10 @@ void main() {
 
   group('Fmt', () {
     test('salaire', () {
-      expect(Fmt.salary(min: 45000, max: 55000, currency: 'EUR', period: 'year'), '45 k – 55 k EUR / an');
+      expect(
+        Fmt.salary(min: 45000, max: 55000, currency: 'EUR', period: 'year'),
+        '45 k – 55 k EUR / an',
+      );
       expect(Fmt.salary(min: 600, currency: 'EUR', period: 'day'), '600 EUR / jour');
       expect(Fmt.salary(raw: 'Selon profil'), 'Selon profil');
       expect(Fmt.salary(), '—');

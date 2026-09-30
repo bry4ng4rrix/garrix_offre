@@ -46,13 +46,18 @@ class _ServerSheetState extends ConsumerState<ServerSheet> {
     });
     try {
       final response = await Dio(
-        BaseOptions(connectTimeout: const Duration(seconds: 8), receiveTimeout: const Duration(seconds: 8)),
+        BaseOptions(
+          connectTimeout: const Duration(seconds: 8),
+          receiveTimeout: const Duration(seconds: 8),
+        ),
       ).get<dynamic>('$url/ready');
       final data = response.data;
       final ok = data is Map && data['status'] == 'ready';
       setState(() {
         _test = ok ? _TestState.ok : _TestState.failed;
-        _detail = ok ? 'Serveur prêt (base de données et Redis joignables).' : 'Réponse inattendue.';
+        _detail = ok
+            ? 'Serveur prêt (base de données et Redis joignables).'
+            : 'Réponse inattendue.';
       });
     } on DioException catch (error) {
       setState(() {
@@ -148,7 +153,9 @@ class _ServerSheetState extends ConsumerState<ServerSheet> {
                   ),
                 ),
                 const Gap(10),
-                Expanded(child: FilledButton(onPressed: _save, child: const Text('Enregistrer'))),
+                Expanded(
+                  child: FilledButton(onPressed: _save, child: const Text('Enregistrer')),
+                ),
               ],
             ),
             const Gap(4),

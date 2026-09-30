@@ -122,14 +122,16 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
   /// Ouvre l'onglet Offres avec les filtres donnés.
   void _openJobs(JobFilters filters) {
-    ref.read(jobFiltersProvider.notifier).set(filters);
+    ref.read(jobFiltersProvider(JobScope.offers).notifier).set(filters);
+    ref.read(selectedJobScopeProvider.notifier).select(JobScope.offers);
     context.go(Routes.jobs);
   }
 
   /// Onglet Offres filtré sur les offres au-dessus du seuil, triées par score.
   void _openBestMatches() {
     final threshold = ref.read(dashboardOverviewProvider).value?.matchingThreshold ?? 70;
-    ref.read(jobFiltersProvider.notifier).showBestMatches(threshold);
+    ref.read(jobFiltersProvider(JobScope.offers).notifier).showBestMatches(threshold);
+    ref.read(selectedJobScopeProvider.notifier).select(JobScope.offers);
     context.go(Routes.jobs);
   }
 

@@ -101,7 +101,11 @@ class _Step extends StatelessWidget {
   Widget build(BuildContext context) {
     final (fill, border, fg) = switch (state) {
       _StepState.done => (AppColors.textPrimary, AppColors.textPrimary, AppColors.onAccent),
-      _StepState.current => (AppColors.surfaceHighest, AppColors.textPrimary, AppColors.textPrimary),
+      _StepState.current => (
+        AppColors.surfaceHighest,
+        AppColors.textPrimary,
+        AppColors.textPrimary,
+      ),
       _StepState.todo => (Colors.transparent, AppColors.borderStrong, AppColors.textTertiary),
       _StepState.inactive => (Colors.transparent, AppColors.border, AppColors.textDisabled),
     };
@@ -120,10 +124,9 @@ class _Step extends StatelessWidget {
               ? Icon(Icons.check_rounded, size: 17, color: fg)
               : Text(
                   '$number',
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: fg,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelLarge?.copyWith(color: fg, fontWeight: FontWeight.w700),
                 ),
         ),
         const Gap(8),

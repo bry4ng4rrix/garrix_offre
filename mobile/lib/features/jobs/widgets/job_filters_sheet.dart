@@ -9,13 +9,14 @@ import '../../../core/widgets/feedback.dart';
 import '../../../core/widgets/form_fields.dart';
 import '../../../core/widgets/ui.dart';
 import '../data/job_filters.dart';
+import 'country_picker_sheet.dart';
 
 /// Libellé de l'ordre de tri, adapté au champ trié.
 String sortOrderLabel(JobSortField field, bool desc) => switch (field) {
   JobSortField.score => desc ? 'Meilleurs scores d\'abord' : 'Scores les plus bas d\'abord',
   JobSortField.title => desc ? 'De Z à A' : 'De A à Z',
-  JobSortField.publishedAt || JobSortField.createdAt =>
-    desc ? 'Plus récentes d\'abord' : 'Plus anciennes d\'abord',
+  JobSortField.publishedAt ||
+  JobSortField.createdAt => desc ? 'Plus récentes d\'abord' : 'Plus anciennes d\'abord',
 };
 
 /// Ouvre la feuille de filtres ; renvoie les nouveaux filtres (null si fermée sans valider).
@@ -27,7 +28,8 @@ Future<JobFilters?> showJobFiltersSheet(BuildContext context, JobFilters initial
     );
 
 /// Tous les critères de `GET /jobs` : recherche, score, contrat, télétravail, lieu, compétence,
-/// entreprise, source, niveau, catégorie, statut, dates de publication et tri.
+/// entreprise, source, niveau, pays, statut, dates de publication et tri. La catégorie de
+/// source est fixée par le sous-onglet (offres d'emploi ou missions freelance).
 class JobFiltersSheet extends ConsumerStatefulWidget {
   const JobFiltersSheet({super.key, required this.initial});
 
@@ -47,7 +49,7 @@ class _JobFiltersSheetState extends ConsumerState<JobFiltersSheet> {
   String? _contract;
   String? _level;
   bool? _remote;
-  SourceCategory? _category;
+  late List<String> _countries;
   JobStatusFilter? _status;
   DateTime? _after;
   DateTime? _before;
@@ -70,7 +72,7 @@ class _JobFiltersSheetState extends ConsumerState<JobFiltersSheet> {
     _contract = f.contractType;
     _level = f.experienceLevel;
     _remote = f.remote;
-    _category = f.sourceCategory;
+    _countries = f.countries;
     _status = f.status;
     _after = f.publishedAfter;
     _before = f.publishedBefore;
@@ -98,13 +100,13 @@ class _JobFiltersSheetState extends ConsumerState<JobFiltersSheet> {
     company: _company.text,
     source: _source.text,
     experienceLevel: _level,
-    sourceCategory: _category,
+    scope: widget.initial.scope,
     status: _status,
     publishedAfter: _after,
     publishedBefore: _before,
     sortBy: _sortBy,
     sortDesc: _sortDesc,
-  ).copyWith(); // normalise les textes vides en null
+  ).copyWith(countries: _countries); // normalise les textes vides en null, trie les pays
 
   void _reset() {
     setState(() {
@@ -115,7 +117,7 @@ class _JobFiltersSheetState extends ConsumerState<JobFiltersSheet> {
       _contract = null;
       _level = null;
       _remote = null;
-      _category = null;
+      _countries = const [];
       _status = null;
       _after = null;
       _before = null;
@@ -163,16 +165,19 @@ class _JobFiltersSheetState extends ConsumerState<JobFiltersSheet> {
               const Gap(6),
               Text(
                 'Sans choix : offres nouvelles et actives, hors offres ignorées.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textTertiary),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppColors.textTertiary),
               ),
               formGap,
-              const FieldLabel('Type d\'offre'),
-              ChoiceChips<SourceCategory>(
-                values: SourceCategory.values,
-                selected: _category,
-                labelOf: (c) => c.label,
-                allowDeselect: true,
-                onSelected: (c) => setState(() => _category = c),
+              const FieldLabel('Pays'),
+              _CountryField(
+                countries: _countries,
+                onTap: () async {
+                  final picked = await showCountryPicker(context, _build());
+                  if (picked != null && mounted) setState(() => _countries = picked);
+                },
+                onClear: () => setState(() => _countries = const []),
               ),
               formGap,
               SliderRow(
@@ -263,7 +268,9 @@ class _JobFiltersSheetState extends ConsumerState<JobFiltersSheet> {
                       value: _before,
                       lastDate: DateTime.now().add(const Duration(days: 1)),
                       onChanged: (d) => setState(
-                        () => _before = d == null ? null : DateTime(d.year, d.month, d.day, 23, 59, 59),
+                        () => _before = d == null
+                            ? null
+                            : DateTime(d.year, d.month, d.day, 23, 59, 59),
                       ),
                     ),
                   ),
@@ -290,7 +297,9 @@ class _JobFiltersSheetState extends ConsumerState<JobFiltersSheet> {
           ),
         ),
         DecoratedBox(
-          decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.border))),
+          decoration: const BoxDecoration(
+            border: Border(top: BorderSide(color: AppColors.border)),
+          ),
           child: SafeArea(
             top: false,
             child: Padding(
@@ -306,4 +315,37 @@ class _JobFiltersSheetState extends ConsumerState<JobFiltersSheet> {
       ],
     );
   }
+}
+
+/// Champ « Pays » : résumé de la sélection, ouvre la liste des pays.
+class _CountryField extends StatelessWidget {
+  const _CountryField({required this.countries, required this.onTap, required this.onClear});
+
+  final List<String> countries;
+  final VoidCallback onTap;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    borderRadius: AppRadius.input,
+    onTap: onTap,
+    child: InputDecorator(
+      decoration: InputDecoration(
+        prefixIcon: const Icon(Icons.public_rounded, size: 20),
+        suffixIcon: countries.isEmpty
+            ? const Icon(Icons.expand_more_rounded)
+            : IconButton(
+                tooltip: 'Tous les pays',
+                icon: const Icon(Icons.close_rounded, size: 18),
+                onPressed: onClear,
+              ),
+      ),
+      child: Text(
+        countries.isEmpty ? 'Tous les pays' : countries.map(countryLabel).join(', '),
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(color: countries.isEmpty ? AppColors.textTertiary : AppColors.textPrimary),
+      ),
+    ),
+  );
 }
