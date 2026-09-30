@@ -6,7 +6,7 @@
 #
 # Secrets à créer (Settings > Secrets and variables > Actions) :
 #   VPS_HOST, VPS_USER, VPS_SSH_KEY, VPS_KNOWN_HOSTS   (voir backend/docs/DEPLOYMENT.md)
-# Variables optionnelles : VPS_PATH (défaut garrix-offre), NGINX_PORT (défaut 80)
+# Variables optionnelles : VPS_PATH (défaut garrix-offre), API_PORT (défaut 8000)
 
 name: Backend CI/CD
 
