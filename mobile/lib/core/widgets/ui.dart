@@ -33,6 +33,9 @@ class PageBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Align(
     alignment: Alignment.topCenter,
+    // heightFactor : hauteur = celle du contenu (sinon l'Align occuperait tout l'espace
+    // disponible, par exemple toute la hauteur de l'écran dans une barre du bas).
+    heightFactor: 1,
     child: ConstrainedBox(
       constraints: BoxConstraints(maxWidth: maxWidth),
       child: Padding(padding: padding, child: child),

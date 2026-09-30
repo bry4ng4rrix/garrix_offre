@@ -21,7 +21,8 @@ class DocumentFiles {
   Future<void> open(UserDocument document) async {
     final directory = Directory('${(await getTemporaryDirectory()).path}/garrix_documents');
     await directory.create(recursive: true);
-    final file = File('${directory.path}/${document.id.substring(0, 8)}_${document.safeFilename}');
+    final prefix = document.id.length > 8 ? document.id.substring(0, 8) : document.id;
+    final file = File('${directory.path}/${prefix}_${document.safeFilename}');
     await file.writeAsBytes(await _repository.download(document), flush: true);
     final result = await OpenFilex.open(file.path);
     switch (result.type) {

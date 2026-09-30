@@ -104,21 +104,21 @@ class JobDetailNotifier extends AsyncNotifier<Job> {
     final previous = state.value;
     if (previous == null) return;
     final status = previous.status;
-    state = AsyncData(
-      previous.copyWith(
-        status: JobUserState(
-          state: status.state,
-          isNew: false,
-          isExpired: status.isExpired,
-          isSaved: status.isSaved,
-          isIgnored: status.isIgnored,
-          applicationStatus: status.applicationStatus == ApplicationStatus.notApplied
-              ? ApplicationStatus.preparing
-              : status.applicationStatus,
-          applicationId: applicationId,
-        ),
+    final updated = previous.copyWith(
+      status: JobUserState(
+        state: status.state,
+        isNew: false,
+        isExpired: status.isExpired,
+        isSaved: status.isSaved,
+        isIgnored: status.isIgnored,
+        applicationStatus: status.applicationStatus == ApplicationStatus.notApplied
+            ? ApplicationStatus.preparing
+            : status.applicationStatus,
+        applicationId: applicationId,
       ),
     );
+    state = AsyncData(updated);
+    ref.read(jobChangesProvider.notifier).emit(JobChange.updated(updated));
   }
 }
 

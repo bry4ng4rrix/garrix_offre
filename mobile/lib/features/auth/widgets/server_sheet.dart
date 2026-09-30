@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/auth/auth_controller.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
@@ -64,8 +65,25 @@ class _ServerSheetState extends ConsumerState<ServerSheet> {
   }
 
   Future<void> _save() async {
-    await ref.read(serverUrlProvider.notifier).update(_url.text);
-    if (mounted) Navigator.of(context).pop();
+    final url = ServerUrlNotifier.normalize(_url.text);
+    if (url == ref.read(serverUrlProvider)) {
+      Navigator.of(context).pop();
+      return;
+    }
+    final auth = ref.read(authControllerProvider);
+    if (auth.isSignedIn) {
+      // La session appartient à l'ancien serveur : on la ferme là-bas avant de changer d'adresse.
+      final confirmed = await confirmDialog(
+        context,
+        title: 'Changer de serveur ?',
+        message: 'Vous serez déconnecté puis devrez vous reconnecter sur le nouveau serveur.',
+        confirmLabel: 'Changer',
+      );
+      if (!confirmed || !mounted) return;
+      await ref.read(authControllerProvider.notifier).logout();
+    }
+    await ref.read(serverUrlProvider.notifier).update(url);
+    if (mounted) Navigator.of(context).maybePop();
     showToast('Serveur enregistré', kind: ToastKind.success);
   }
 

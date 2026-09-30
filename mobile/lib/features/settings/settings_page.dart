@@ -32,24 +32,9 @@ class SettingsPage extends ConsumerWidget {
     }
   }
 
-  Future<void> _changeServer(BuildContext context, WidgetRef ref) async {
-    final before = ref.read(serverUrlProvider);
-    await showAppSheet<void>(context, builder: (_) => const ServerSheet());
-    if (!context.mounted || ref.read(serverUrlProvider) == before) return;
-    // La session a été ouverte sur l'ancien serveur : on propose de se reconnecter.
-    final relogin = await confirmDialog(
-      context,
-      title: 'Serveur modifié',
-      message:
-          'Votre session a été ouverte sur l\'ancien serveur. Déconnectez-vous puis '
-          'reconnectez-vous pour utiliser le nouveau.',
-      confirmLabel: 'Se reconnecter',
-      cancelLabel: 'Plus tard',
-    );
-    if (relogin && context.mounted) {
-      await ref.read(authControllerProvider.notifier).logout();
-    }
-  }
+  /// `ServerSheet` déconnecte de l'ancien serveur avant d'enregistrer la nouvelle adresse.
+  Future<void> _changeServer(BuildContext context, WidgetRef ref) =>
+      showAppSheet<void>(context, builder: (_) => const ServerSheet());
 
   Future<void> _logoutAllDevices(BuildContext context, WidgetRef ref) async {
     final confirmed = await confirmDialog(

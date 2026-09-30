@@ -441,7 +441,6 @@ class _EditProfileFormState extends ConsumerState<_EditProfileForm> {
                     label: 'Disponible à partir du',
                     optional: true,
                     value: _availableFrom,
-                    firstDate: DateTime(DateTime.now().year - 1),
                     onChanged: (date) => setState(() => _availableFrom = date),
                   ),
                   formGap,

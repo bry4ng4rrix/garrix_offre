@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 import '../../../core/models/enums.dart';
 import '../../../core/models/reference.dart';
 import '../../../core/utils/formatters.dart';
@@ -92,3 +94,15 @@ String durationLabel(DateTime start, DateTime? end) {
 
 /// Libellé court d'une priorité (« Priorité haute »).
 String priorityLabel(Priority priority) => 'Priorité ${priority.label.toLowerCase()}';
+
+final _monthYear = DateFormat('MMM yyyy', 'fr_FR');
+
+/// « janv. 2022 ».
+String monthYear(DateTime date) => _monthYear.format(date);
+
+/// Période d'une expérience : « janv. 2022 – aujourd'hui », « mars 2019 – juin 2021 ».
+String periodLabel(DateTime start, DateTime? end, {bool current = false}) {
+  if (current) return '${monthYear(start)} – aujourd\'hui';
+  if (end == null) return monthYear(start);
+  return '${monthYear(start)} – ${monthYear(end)}';
+}

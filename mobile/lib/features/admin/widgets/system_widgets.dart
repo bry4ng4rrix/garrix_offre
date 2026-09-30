@@ -176,7 +176,8 @@ class SystemMetricsGrid extends StatelessWidget {
         label: 'Temps réel',
         value: Fmt.number(status.websocketConnections),
         icon: Icons.bolt_rounded,
-        caption: 'connexion${status.websocketConnections > 1 ? 's' : ''} active${status.websocketConnections > 1 ? 's' : ''}',
+        caption:
+            'connexion${status.websocketConnections > 1 ? 's' : ''} active${status.websocketConnections > 1 ? 's' : ''}',
       ),
     ],
   );

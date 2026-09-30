@@ -9,6 +9,7 @@ import '../../../core/widgets/feedback.dart';
 import '../../../core/widgets/ui.dart';
 import '../data/profile_models.dart';
 import '../data/profile_providers.dart';
+import '../data/profile_repository.dart';
 
 /// Petits composants partagés par les écrans du profil.
 
@@ -358,3 +359,55 @@ Future<bool> confirmDiscard(BuildContext context) => confirmDialog(
   confirmLabel: 'Quitter',
   destructive: true,
 );
+
+/// Lance le recalcul de tous les scores (`POST /matching/recalculate`) et affiche le résultat.
+/// Prend le dépôt (et non un `ref`) : utilisable depuis l'action d'un message, page fermée.
+Future<void> recalculateScores(ProfileRepository repository) async {
+  final result = await runAction(repository.recalculateScores);
+  if (result == null) return;
+  showToast(
+    result.queued
+        ? 'Recalcul lancé : vos scores seront à jour dans quelques instants.'
+        : 'Scores recalculés (${result.jobsMatched ?? 0} offres).',
+    kind: ToastKind.success,
+  );
+}
+
+/// Message de succès proposant de recalculer les scores.
+void showSavedWithRecalculate(String message, ProfileRepository repository) => showToast(
+  message,
+  kind: ToastKind.success,
+  action: SnackBarAction(label: 'Recalculer', onPressed: () => recalculateScores(repository)),
+);
+
+/// Élément choisi (compétence ou technologie) avec un bouton « Changer » optionnel.
+class ChosenItemCard extends StatelessWidget {
+  const ChosenItemCard({super.key, required this.name, this.subtitle, this.onChange});
+
+  final String name;
+  final String? subtitle;
+  final VoidCallback? onChange;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context).textTheme;
+    return AppCard(
+      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, 12, AppSpacing.sm, 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name, style: theme.titleMedium),
+                if (subtitle != null)
+                  Text(subtitle!, style: theme.bodySmall?.copyWith(color: AppColors.textTertiary)),
+              ],
+            ),
+          ),
+          if (onChange != null) TextButton(onPressed: onChange, child: const Text('Changer')),
+        ],
+      ),
+    );
+  }
+}

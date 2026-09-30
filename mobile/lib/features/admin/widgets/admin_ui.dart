@@ -59,11 +59,7 @@ class StatusDot extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     width: size,
     height: size,
-    decoration: BoxDecoration(
-      color: color,
-      shape: BoxShape.circle,
-      boxShadow: const [],
-    ),
+    decoration: BoxDecoration(color: color, shape: BoxShape.circle, boxShadow: const []),
   );
 }
 
@@ -84,7 +80,9 @@ class JsonBlock extends StatelessWidget {
   }
 
   bool get _isEmpty =>
-      value == null || (value is Map && (value as Map).isEmpty) || (value is List && (value as List).isEmpty);
+      value == null ||
+      (value is Map && (value as Map).isEmpty) ||
+      (value is List && (value as List).isEmpty);
 
   @override
   Widget build(BuildContext context) {
@@ -158,23 +156,27 @@ class ChipBar<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget chip({required String label, required bool active, required VoidCallback onTap, IconData? icon}) =>
-        Padding(
-          padding: const EdgeInsets.only(right: 8),
-          child: ChoiceChip(
-            label: Text(label),
-            avatar: icon == null
-                ? null
-                : Icon(icon, size: 16, color: active ? AppColors.onAccent : AppColors.textSecondary),
-            showCheckmark: false,
-            selected: active,
-            labelStyle: TextStyle(
-              color: active ? AppColors.onAccent : AppColors.textPrimary,
-              fontWeight: FontWeight.w500,
-            ),
-            onSelected: (_) => onTap(),
-          ),
-        );
+    Widget chip({
+      required String label,
+      required bool active,
+      required VoidCallback onTap,
+      IconData? icon,
+    }) => Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: ChoiceChip(
+        label: Text(label),
+        avatar: icon == null
+            ? null
+            : Icon(icon, size: 16, color: active ? AppColors.onAccent : AppColors.textSecondary),
+        showCheckmark: false,
+        selected: active,
+        labelStyle: TextStyle(
+          color: active ? AppColors.onAccent : AppColors.textPrimary,
+          fontWeight: FontWeight.w500,
+        ),
+        onSelected: (_) => onTap(),
+      ),
+    );
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -344,7 +346,10 @@ class NoteBox extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (title != null) ...[
-                  Text(title!, style: theme.labelLarge?.copyWith(color: fg, fontWeight: FontWeight.w600)),
+                  Text(
+                    title!,
+                    style: theme.labelLarge?.copyWith(color: fg, fontWeight: FontWeight.w600),
+                  ),
                   const Gap(2),
                 ],
                 Text(
@@ -448,7 +453,12 @@ class FormSheet extends StatelessWidget {
       key: formKey,
       child: SingleChildScrollView(
         primary: expand,
-        padding: const EdgeInsets.fromLTRB(AppSpacing.page, AppSpacing.sm, AppSpacing.page, AppSpacing.xl),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.page,
+          AppSpacing.sm,
+          AppSpacing.page,
+          AppSpacing.xl,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
@@ -476,7 +486,9 @@ class FormSheet extends StatelessWidget {
         ),
         if (expand) Expanded(child: body) else Flexible(child: body),
         DecoratedBox(
-          decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.border))),
+          decoration: const BoxDecoration(
+            border: Border(top: BorderSide(color: AppColors.border)),
+          ),
           child: SafeArea(
             top: false,
             child: Padding(
@@ -541,13 +553,20 @@ class DetailSheet extends StatelessWidget {
       Expanded(
         child: ListView(
           primary: true,
-          padding: const EdgeInsets.fromLTRB(AppSpacing.page, AppSpacing.sm, AppSpacing.page, AppSpacing.xl),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.page,
+            AppSpacing.sm,
+            AppSpacing.page,
+            AppSpacing.xl,
+          ),
           children: children,
         ),
       ),
       if (actions.isNotEmpty)
         DecoratedBox(
-          decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.border))),
+          decoration: const BoxDecoration(
+            border: Border(top: BorderSide(color: AppColors.border)),
+          ),
           child: SafeArea(
             top: false,
             child: Padding(

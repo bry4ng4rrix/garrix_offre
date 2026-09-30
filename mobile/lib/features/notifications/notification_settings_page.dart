@@ -27,7 +27,7 @@ class NotificationSettingsPage extends ConsumerWidget {
     final threshold = ref.watch(matchingThresholdProvider);
     final loaded = settings.value;
     // Le seuil est facultatif : on attend seulement qu'il ait répondu (valeur ou null).
-    if (loaded == null || threshold.isLoading) {
+    if (loaded == null || !threshold.hasValue) {
       return Scaffold(
         appBar: AppBar(title: const Text(_title)),
         body: AsyncValueView<NotificationSettings>(
