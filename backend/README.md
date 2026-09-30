@@ -78,6 +78,9 @@ Ensuite :
 
 1. Créez **votre** compte : `POST /api/v1/auth/register` (Swagger → *Try it out*).
    **Le premier compte créé devient administrateur.** Mettez ensuite `ALLOW_REGISTRATION=false`.
+   Les comptes suivants sont alors créés par un administrateur : `POST /api/v1/users`
+   (`is_superuser: true` pour un autre administrateur) ou en ligne de commande
+   `python -m scripts.create_user --email ... [--admin]` (`scripts.create_admin` = `--admin`).
 2. Connectez-vous : `POST /api/v1/auth/login`, copiez `access_token`, bouton **Authorize** de Swagger.
 3. Importez les workflows n8n : `make n8n-import` (voir [n8n](#10-n8n)).
 4. Optionnel : données de démonstration (`make seed-dev` en local) — compte `demo@example.com`.

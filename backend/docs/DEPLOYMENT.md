@@ -14,6 +14,23 @@ Internet ──▶ nginx :80 ──▶ api :8000 (127.0.0.1)      worker Celery
   secrets générés sur le serveur (jamais copiés depuis un poste de développement).
 - Serveur actuel : `allsafe@185.215.167.79`, dossier `~/garrix-offre`.
 
+## Ports
+
+| Port | Écoute sur | Service | Accès |
+|---|---|---|---|
+| 80 | toutes les interfaces | nginx → API | **public** : `http://185.215.167.79/` |
+| 8000 | 127.0.0.1 | API (uvicorn) | serveur uniquement |
+| 5678 | 127.0.0.1 | n8n | tunnel SSH (voir plus bas) |
+| 5433 | 127.0.0.1 | PostgreSQL | serveur uniquement |
+| 6380 | 127.0.0.1 | Redis | serveur uniquement |
+
+Les ports 3000, 3010, 8010 et 9001-9010 du VPS appartiennent à d'autres applications
+(`smart_*`, `beszel-agent`) : ne pas les utiliser. Pour changer un port de Garrix Offre, modifiez
+`NGINX_PORT`, `API_PORT`, `N8N_PORT`, `POSTGRES_PORT` ou `REDIS_PORT` dans le `.env` du serveur.
+
+URL publiques : `/` (accueil), `/docs` (Swagger), `/health`, `/ready`, `/api/v1/...`,
+WebSocket `ws://185.215.167.79/api/v1/ws`.
+
 ## Premier déploiement (déjà effectué)
 
 ```bash
@@ -34,7 +51,8 @@ et vérifie `/ready`.
    cd garrix-offre
    docker compose exec api python -m scripts.create_admin --email vous@exemple.com
    ```
-   Le mot de passe est demandé au clavier.
+   Le mot de passe est demandé au clavier. Voir [Créer des utilisateurs](#créer-des-utilisateurs)
+   pour les comptes suivants.
 2. **Configurer n8n** via un tunnel SSH (n8n n'est pas exposé sur Internet) :
    ```bash
    ssh -i ~/.ssh/garrix_offre_deploy -L 5678:127.0.0.1:5678 allsafe@185.215.167.79
@@ -92,13 +110,46 @@ chaque déploiement (*Required reviewers*).
 Aucun secret applicatif (JWT, base de données, Telegram, SMTP...) n'est stocké dans GitHub :
 ils restent uniquement dans le `.env` du serveur.
 
-## Opérations courantes
+## Démarrer, arrêter, surveiller
+
+Les conteneurs redémarrent seuls après un reboot du VPS (`restart: unless-stopped`, service
+Docker activé). Chaque push sur `main` redéploie automatiquement. À la main :
 
 ```bash
-# sur le serveur, dans ~/garrix-offre
-alias dc='docker compose -f docker-compose.yml -f docker-compose.prod.yml'
-dc ps                              # état et healthchecks
-dc logs -f api worker              # logs (JSON)
+ssh -i ~/.ssh/garrix_offre_deploy allsafe@185.215.167.79
+cd ~/garrix-offre
+alias dc='docker compose -f docker-compose.yml -f docker-compose.prod.yml'   # toujours les 2 fichiers
+
+dc up -d                           # démarrer (ou appliquer une modification du .env)
+dc ps                              # état et healthchecks (tout doit être "healthy")
+dc logs -f api worker              # logs (JSON) ; Ctrl+C pour quitter
+dc restart api                     # redémarrer un service (sans relire le .env)
+dc stop                            # arrêter sans supprimer
+dc down                            # arrêter et supprimer les conteneurs (les données restent)
 dc exec postgres pg_dump -U garrix garrix_offre > sauvegarde.sql   # sauvegarde
-dc restart api worker              # après une modification du .env
 ```
+
+`dc up -d` sans `-f docker-compose.prod.yml` publierait l'API et n8n sur Internet : utilisez
+toujours l'alias. Ne lancez jamais `dc down -v` (supprime les volumes, donc la base).
+
+## Créer des utilisateurs
+
+Les inscriptions publiques sont fermées (`ALLOW_REGISTRATION=false`). Trois possibilités :
+
+1. **Ligne de commande sur le serveur** (mot de passe demandé au clavier) :
+   ```bash
+   dc exec api python -m scripts.create_admin --email vous@exemple.com         # administrateur
+   dc exec api python -m scripts.create_user --email collegue@exemple.com      # utilisateur simple
+   dc exec api python -m scripts.create_user --email collegue@exemple.com --admin
+   ```
+   Sur un compte existant, le script remplace le mot de passe et réactive le compte
+   (pratique en cas d'oubli).
+2. **API, en tant qu'administrateur** (Swagger `http://185.215.167.79/docs` ou l'app Flutter) :
+   `POST /api/v1/auth/login` → bouton **Authorize** → `POST /api/v1/users`
+   avec `{"email": "...", "password": "...", "is_superuser": false}`.
+   `GET /api/v1/users` liste les comptes, `PATCH /api/v1/users/{id}` active/désactive ou
+   promeut un compte.
+3. **Ouvrir temporairement les inscriptions** : `ALLOW_REGISTRATION=true` dans le `.env`,
+   `dc up -d`, inscription via `POST /api/v1/auth/register`, puis remettre `false` et `dc up -d`.
+
+Mot de passe : 8 caractères minimum, au moins une lettre et un chiffre.
