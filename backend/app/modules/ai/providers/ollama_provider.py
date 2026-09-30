@@ -26,11 +26,15 @@ logger = logging.getLogger("app.ai")
 
 DEFAULT_MODEL = "qwen3:4b"
 
-# Température et longueur maximale selon le type de tâche.
+# Fenêtre de contexte : consignes + profil + offre (description limitée à 6000 caractères)
+# tiennent largement ; la valeur par défaut d'Ollama (4096) couperait le début des consignes.
+NUM_CTX = 8192
+
+# Température et longueur maximale de la réponse selon le type de tâche.
 _OPTIONS: dict[Effort, dict[str, Any]] = {
-    "low": {"temperature": 0.2, "num_predict": 1024},
-    "medium": {"temperature": 0.5, "num_predict": 2048},
-    "high": {"temperature": 0.6, "num_predict": 4096},
+    "low": {"temperature": 0.2, "num_predict": 700, "num_ctx": NUM_CTX},
+    "medium": {"temperature": 0.5, "num_predict": 1200, "num_ctx": NUM_CTX},
+    "high": {"temperature": 0.6, "num_predict": 2400, "num_ctx": NUM_CTX},
 }
 _THINK_BLOCK = re.compile(r"<think>.*?</think>", re.DOTALL)
 

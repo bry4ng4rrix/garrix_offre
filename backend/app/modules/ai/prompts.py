@@ -95,10 +95,18 @@ RESPONSE_ANALYSIS_SCHEMA = _object(
 )
 
 
+# Au-delà, la description est coupée : l'essentiel d'une offre tient dans ses premiers
+# paragraphes, et un texte trop long ralentit fortement les modèles locaux (Ollama).
+MAX_DESCRIPTION_CHARS = 6000
+
+
 def job_block(title: str, company: str | None, description: str | None) -> str:
+    text = (description or "").strip()
+    if len(text) > MAX_DESCRIPTION_CHARS:
+        text = text[:MAX_DESCRIPTION_CHARS].rsplit(" ", 1)[0] + " […]"
     return (
         f"<job_posting>\nTitre : {title}\nEntreprise : {company or 'non précisée'}\n\n"
-        f"{description or '(pas de description)'}\n</job_posting>"
+        f"{text or '(pas de description)'}\n</job_posting>"
     )
 
 

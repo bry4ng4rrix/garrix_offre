@@ -73,3 +73,12 @@ def test_invalid_json() -> None:
     with pytest.raises(AIProviderError) as error:
         provider_answering(lambda _: chat_reply("pas du JSON")).complete_json("s", "p", {})
     assert error.value.code == "AI_INVALID_RESPONSE"
+
+
+def test_long_job_description_is_cut() -> None:
+    from app.modules.ai.prompts import MAX_DESCRIPTION_CHARS, job_block
+
+    block = job_block("Dev", None, "mot " * 5000)
+    assert len(block) < MAX_DESCRIPTION_CHARS + 200
+    assert block.rstrip().endswith("[…]\n</job_posting>".strip())
+    assert "(pas de description)" in job_block("Dev", None, None)
