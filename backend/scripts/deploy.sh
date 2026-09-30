@@ -40,12 +40,15 @@ if [ ! -f .env ]; then
     -e 's/^NGINX_PORT=.*/NGINX_PORT=80/' .env
   import_workflows=true
 fi
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build --wait --remove-orphans
+# "< /dev/null" : sans cela, docker compose lirait la suite de ce script sur l'entrée standard.
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build --wait --remove-orphans < /dev/null
 if [ "$import_workflows" = "true" ]; then
-  docker compose exec -T n8n n8n import:workflow --separate --input=/home/node/workflows
+  docker compose exec -T n8n n8n import:workflow --separate --input=/home/node/workflows < /dev/null
 fi
-docker image prune -f >/dev/null
-docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
+# Recharge la configuration nginx (fichier monté depuis docker/nginx/default.conf).
+docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T nginx nginx -s reload < /dev/null
+docker image prune -f > /dev/null < /dev/null
+docker compose -f docker-compose.yml -f docker-compose.prod.yml ps < /dev/null
 REMOTE
 
 echo "==> Vérification"

@@ -169,3 +169,24 @@ def test_audit_log_records_logins(client: TestClient, admin_headers: dict[str, s
         "items"
     ]
     assert {"auth.register", "auth.login"} <= {log["action"] for log in logs}
+
+
+def test_create_admin_script(client: TestClient, monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    import io
+    import sys
+
+    from scripts import create_admin
+
+    monkeypatch.setattr(
+        sys, "argv", ["create_admin", "--email", "Owner@Example.com", "--password-stdin"]
+    )
+    monkeypatch.setattr(sys, "stdin", io.StringIO("Sup3rPassw0rd!\n"))
+    assert create_admin.main() == 0
+    login = client.post(
+        f"{API}/auth/login", json={"email": "owner@example.com", "password": "Sup3rPassw0rd!"}
+    )
+    headers = {"Authorization": f"Bearer {login.json()['data']['access_token']}"}
+    assert client.get(f"{API}/auth/me", headers=headers).json()["data"]["is_superuser"] is True
+
+    monkeypatch.setattr(sys, "stdin", io.StringIO("weak\n"))
+    assert create_admin.main() == 1

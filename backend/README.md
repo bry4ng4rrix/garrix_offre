@@ -148,7 +148,7 @@ Toutes sont décrites dans [`.env.example`](.env.example). `make env` crée `.en
 | `FRANCE_TRAVAIL_CLIENT_ID/SECRET`, `SOURCE_*` | Clés des API d'offres (voir [Sources](#9-sources-doffres)) |
 | `MATCHING_*_WEIGHT`, `MATCHING_DEFAULT_THRESHOLD` | Poids et seuil par défaut du matching |
 | `AI_PROVIDER`, `AI_API_KEY`, `AI_MODEL` | IA optionnelle |
-| `API_PORT`, `N8N_PORT`, `NGINX_PORT`, `*_BIND` | Ports publiés |
+| `API_PORT`, `N8N_PORT`, `NGINX_PORT`, `POSTGRES_PORT`, `REDIS_PORT` | Ports publiés sur la machine |
 
 Les secrets sont typés `SecretStr` : ils n'apparaissent jamais dans les logs.
 

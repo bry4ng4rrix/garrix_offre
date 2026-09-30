@@ -1,0 +1,121 @@
+# CI/CD du backend Garrix Offre
+#
+#   1. quality : lint (Ruff, Black, MyPy) + tests (PostgreSQL et Redis en services)
+#   2. docker  : construction de l'image de production (vérifie le Dockerfile)
+#   3. deploy  : sur la branche main uniquement, copie du code sur le VPS et redémarrage
+#
+# Secrets à créer (Settings > Secrets and variables > Actions) :
+#   VPS_HOST, VPS_USER, VPS_SSH_KEY, VPS_KNOWN_HOSTS   (voir backend/docs/DEPLOYMENT.md)
+# Variables optionnelles : VPS_PATH (défaut garrix-offre), NGINX_PORT (défaut 80)
+
+name: Backend CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths: ["backend/**", ".github/workflows/backend.yml"]
+  pull_request:
+    paths: ["backend/**", ".github/workflows/backend.yml"]
+  workflow_dispatch:
+
+concurrency:
+  group: backend-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: backend
+
+jobs:
+  quality:
+    name: Lint et tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: garrix
+          POSTGRES_PASSWORD: garrix
+          POSTGRES_DB: garrix_offre
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U garrix" --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql+psycopg://garrix:garrix@localhost:5432/garrix_offre_test
+      TEST_REDIS_URL: redis://localhost:6379/15
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+
+      - name: Installer les dépendances
+        run: pip install -r requirements-dev.txt
+
+      - name: Ruff
+        run: ruff check app tests scripts alembic
+
+      - name: Black
+        run: black --check app tests scripts alembic
+
+      - name: MyPy
+        run: mypy app scripts
+
+      - name: Tests
+        run: pytest
+
+  docker:
+    name: Image Docker
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - name: Construire l'image de production
+        run: docker build --target production -t garrix-offre-api:ci .
+
+  deploy:
+    name: Déploiement sur le VPS
+    needs: [quality, docker]
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Configurer SSH
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Déployer
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PATH: ${{ vars.VPS_PATH || 'garrix-offre' }}
+          NGINX_PORT: ${{ vars.NGINX_PORT || '80' }}
+        run: SSH_KEY="$HOME/.ssh/deploy_key" bash scripts/deploy.sh
+
+      - name: Nettoyer la clé
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
