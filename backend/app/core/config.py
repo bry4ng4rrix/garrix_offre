@@ -193,4 +193,4 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     """Retourne la configuration (lue une seule fois, puis mise en cache)."""
-    return Settings()  # type: ignore[call-arg]  # les valeurs viennent de l'environnement
+    return Settings()  # les valeurs viennent de l'environnement / du .env

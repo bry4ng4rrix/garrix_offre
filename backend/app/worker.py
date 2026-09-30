@@ -54,4 +54,4 @@ def configure_worker_logging(**_kwargs: Any) -> None:
 
 
 # Charge tous les modèles SQLAlchemy (relations entre modules).
-import app.modules.models  # noqa: E402, F401
+from app.modules import models  # noqa: E402, F401 - enregistre tous les modèles SQLAlchemy

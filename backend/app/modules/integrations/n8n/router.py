@@ -153,12 +153,11 @@ def run_source(source_id: uuid.UUID, session: DbSession, context: N8nContext):
     summary="Expirer / archiver les anciennes offres",
 )
 def expire_jobs(session: DbSession, context: N8nContext):
-    return _handle(
-        session,
-        "maintenance.expire-jobs",
-        context,
-        lambda: JobService(session).expire_outdated_jobs(),
-    )
+    def handler() -> dict[str, int]:
+        result = JobService(session).expire_outdated_jobs()
+        return result | {"stale_runs_failed": ScrapingService(session).fail_stale_runs()}
+
+    return _handle(session, "maintenance.expire-jobs", context, handler)
 
 
 # --- Matching ---

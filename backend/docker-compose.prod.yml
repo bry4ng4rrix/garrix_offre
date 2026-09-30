@@ -1,0 +1,24 @@
+# =============================================================================
+# Surcharge de PRODUCTION (serveur public) :
+#
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build --wait
+#
+# - seul nginx est accessible depuis Internet (port NGINX_PORT, 80 par défaut) ;
+# - l'API et n8n n'écoutent que sur 127.0.0.1 (n8n : tunnel SSH, voir docs/DEPLOYMENT.md) ;
+# - PostgreSQL et Redis restent sur 127.0.0.1 (comme dans docker-compose.yml).
+# Dans le .env du serveur : APP_ENV=production, LOG_FORMAT=json, ALLOW_REGISTRATION=false.
+# =============================================================================
+services:
+  api:
+    ports: !override
+      - "127.0.0.1:${API_PORT:-8000}:8000"
+    environment:
+      API_WORKERS: ${API_WORKERS:-2}
+
+  n8n:
+    ports: !override
+      - "127.0.0.1:${N8N_PORT:-5678}:5678"
+
+  nginx:
+    ports: !override
+      - "${NGINX_PORT:-80}:80"

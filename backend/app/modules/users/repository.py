@@ -20,5 +20,5 @@ class UserRepository(BaseRepository[User]):
         stmt = select(User).where(User.is_active.is_(True), User.is_superuser.is_(True))
         return list(self.session.scalars(stmt))
 
-    def list_query(self) -> Select[tuple[User]]:
+    def list_query(self) -> Select[User]:
         return select(User).order_by(User.created_at)

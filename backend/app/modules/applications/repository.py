@@ -37,7 +37,7 @@ class ApplicationRepository(BaseRepository[Application]):
         user_id: uuid.UUID,
         status: ApplicationStatus | None = None,
         job_id: uuid.UUID | None = None,
-    ) -> Select[tuple[Application]]:
+    ) -> Select[Application]:
         stmt = (
             select(Application)
             .where(Application.user_id == user_id)
@@ -102,7 +102,7 @@ class RecruiterResponseRepository(BaseRepository[RecruiterResponse]):
 
     def list_query(
         self, user_id: uuid.UUID, application_id: uuid.UUID | None = None
-    ) -> Select[tuple[RecruiterResponse]]:
+    ) -> Select[RecruiterResponse]:
         stmt = (
             select(RecruiterResponse)
             .where(RecruiterResponse.user_id == user_id)

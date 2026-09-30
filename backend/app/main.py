@@ -13,7 +13,6 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-import app.modules.models
 from app.api.health import router as health_router
 from app.api.router import api_router
 from app.core.config import get_settings
@@ -25,6 +24,7 @@ from app.core.middleware import (
     RequestLoggingMiddleware,
 )
 from app.core.redis import create_async_redis
+from app.modules import models  # noqa: F401 - enregistre tous les modèles SQLAlchemy
 from app.modules.realtime.manager import WebSocketManager
 from app.modules.realtime.router import router as realtime_router
 

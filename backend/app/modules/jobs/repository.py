@@ -1,6 +1,7 @@
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy import ColumnElement, Select, and_, exists, func, or_, select, update
 
@@ -51,7 +52,7 @@ class JobRepository(BaseRepository[Job]):
 
     # --- Recherche ---
 
-    def search_query(self, user_id: uuid.UUID, filters: JobFilters) -> Select[tuple[Job]]:
+    def search_query(self, user_id: uuid.UUID, filters: JobFilters) -> Select[Job]:
         stmt = select(Job)
         needs_match = filters.min_score is not None or filters.sort_by == JobSortField.SCORE
         if needs_match:
@@ -159,7 +160,7 @@ class JobRepository(BaseRepository[Job]):
                 return [Job.status == JobStatus(status.value)]
 
     @staticmethod
-    def _ordering(filters: JobFilters, has_match: bool) -> list[ColumnElement[object]]:
+    def _ordering(filters: JobFilters, has_match: bool) -> list[Any]:
         match filters.sort_by:
             case JobSortField.SCORE if has_match:
                 column: ColumnElement[object] = JobMatch.score  # type: ignore[assignment]
@@ -197,7 +198,11 @@ class JobRepository(BaseRepository[Job]):
             Application.job_id.in_(job_ids),
             Application.status.not_in(TERMINAL_STATUSES),
         )
-        return {job_id: (app_id, status) for job_id, app_id, status in self.session.execute(stmt)}
+        return {
+            job_id: (app_id, status)
+            for job_id, app_id, status in self.session.execute(stmt)
+            if job_id is not None
+        }
 
     # --- Déduplication ---
 

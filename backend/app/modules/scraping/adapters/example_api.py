@@ -246,6 +246,8 @@ def _skill_names(raw: Any) -> list[str]:
     for item in raw:
         if isinstance(item, str):
             names.append(item)
-        elif isinstance(item, dict) and isinstance(item.get("name") or item.get("label"), str):
-            names.append(item.get("name") or item.get("label"))
+        elif isinstance(item, dict):
+            name = item.get("name") or item.get("label")
+            if isinstance(name, str):
+                names.append(name)
     return [name for name in names if name.strip()]

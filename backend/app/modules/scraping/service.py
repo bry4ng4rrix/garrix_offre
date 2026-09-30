@@ -10,6 +10,7 @@ Une source en échec n'empêche jamais les autres de fonctionner (RG-19).
 
 import logging
 import uuid
+from datetime import timedelta
 from typing import Any
 
 import httpx
@@ -48,6 +49,7 @@ FINAL_STATUSES = {
     ScrapingRunStatus.CANCELLED,
 }
 PREVIEW_SIZE = 5
+STALE_RUN_AFTER = timedelta(hours=2)
 
 
 class ScrapingService:
@@ -133,12 +135,11 @@ class ScrapingService:
             run.status = ScrapingRunStatus.PARTIAL_SUCCESS if errors else ScrapingRunStatus.SUCCESS
             self.sources.record_run_result(source, success=True)
         except (ScrapingError, AppException) as exc:
-            self.session.rollback()
-            run = self.get_run(run_id)
-            source = run.source
-            run.status = ScrapingRunStatus.FAILED
-            run.error_message = str(exc)[:2000]
-            self.sources.record_run_result(source, success=False, error=run.error_message)
+            run, source = self._mark_failed(run_id, str(exc))
+        except Exception as exc:
+            # Une erreur inattendue ne doit jamais laisser la collecte bloquée en RUNNING.
+            logger.exception("Unexpected scraping error", extra={"run_id": str(run_id)})
+            run, source = self._mark_failed(run_id, f"Unexpected error: {type(exc).__name__}")
 
         run.finished_at = utcnow()
         run.details = {"errors": errors[:50]}
@@ -149,6 +150,20 @@ class ScrapingService:
         self.session.commit()
         self._after_run(run)
         return run
+
+    def _mark_failed(self, run_id: uuid.UUID, message: str) -> tuple[ScrapingRun, Source]:
+        self.session.rollback()
+        run = self.get_run(run_id)
+        run.status = ScrapingRunStatus.FAILED
+        run.error_message = message[:2000]
+        self.sources.record_run_result(run.source, success=False, error=run.error_message)
+        return run, run.source
+
+    def fail_stale_runs(self, older_than: timedelta = STALE_RUN_AFTER) -> int:
+        """Collectes restées PENDING/RUNNING trop longtemps (worker redémarré...) -> FAILED."""
+        count = self.runs.fail_stale(utcnow() - older_than, "Run interrupted (worker restarted?)")
+        self.session.commit()
+        return count
 
     def _after_run(self, run: ScrapingRun) -> None:
         payload = {

@@ -21,7 +21,7 @@ class DocumentRepository(BaseRepository[Document]):
         document_type: DocumentType | None = None,
         is_active: bool | None = None,
         language: str | None = None,
-    ) -> Select[tuple[Document]]:
+    ) -> Select[Document]:
         stmt = (
             select(Document)
             .where(Document.user_id == user_id)

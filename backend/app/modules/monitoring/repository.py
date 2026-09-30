@@ -2,8 +2,9 @@
 
 import uuid
 from datetime import datetime
+from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import Select, func, select
 from sqlalchemy.orm import Session
 
 from app.modules.applications.models import Application, RecruiterResponse
@@ -18,7 +19,7 @@ class MonitoringRepository:
     def __init__(self, session: Session) -> None:
         self.session = session
 
-    def _count(self, stmt) -> int:  # type: ignore[no-untyped-def]
+    def _count(self, stmt: Select[Any]) -> int:
         return int(self.session.scalar(stmt) or 0)
 
     # --- Offres ---
@@ -88,6 +89,7 @@ class MonitoringRepository:
         return [
             max((received - submitted).total_seconds() / 86400, 0)
             for submitted, received in self.session.execute(stmt)
+            if submitted and received
         ]
 
     def count_submitted_ever(self, user_id: uuid.UUID) -> int:

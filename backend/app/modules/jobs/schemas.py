@@ -223,3 +223,4 @@ class JobRawRead(BaseModel):
 class MaintenanceResult(BaseModel):
     expired: int
     archived: int
+    stale_runs_failed: int = 0

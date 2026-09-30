@@ -23,7 +23,7 @@ class NotificationRepository(BaseRepository[Notification]):
         user_id: uuid.UUID,
         is_read: bool | None = None,
         notification_type: NotificationType | None = None,
-    ) -> Select[tuple[Notification]]:
+    ) -> Select[Notification]:
         stmt = (
             select(Notification)
             .where(Notification.user_id == user_id)

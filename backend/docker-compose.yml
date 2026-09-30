@@ -33,7 +33,7 @@ x-backend: &backend
 
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:17-alpine
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -139,6 +139,8 @@ services:
       N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
       GARRIX_API_URL: http://api:8000
       N8N_WEBHOOK_SECRET: ${N8N_WEBHOOK_SECRET}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+      SMTP_FROM: ${SMTP_FROM:-}
     volumes:
       - n8n_data:/home/node/.n8n
       - ./n8n/workflows:/home/node/workflows:ro

@@ -29,7 +29,7 @@ class SkillRepository(BaseRepository[Skill]):
             self.session.scalars(select(Skill).where(Skill.normalized_name.in_(normalized_names)))
         )
 
-    def search_query(self, search: str | None, category_code: str | None) -> Select[tuple[Skill]]:
+    def search_query(self, search: str | None, category_code: str | None) -> Select[Skill]:
         stmt = select(Skill).outerjoin(Skill.category).order_by(Skill.name)
         if search:
             pattern = f"%{search.lower()}%"

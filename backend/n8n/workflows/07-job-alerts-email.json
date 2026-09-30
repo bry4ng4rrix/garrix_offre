@@ -1,0 +1,129 @@
+{
+  "id": "GarrixAlerts00001",
+  "name": "Garrix - 7. Alertes email des sites d'emploi",
+  "active": false,
+  "nodes": [
+    {
+      "id": "bdd8d090-f2f9-5d2d-9d1b-0ac6d27fa5d0",
+      "name": "Note 24fcbeaf",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -300
+      ],
+      "parameters": {
+        "content": "## Alertes email\nPour les sites sans API ni flux autorisé (LinkedIn, Indeed, APEC, Welcome to the Jungle, Malt, Upwork...) : créez des alertes sur ces sites, triez-les dans le dossier IMAP \"Alertes-Emploi\". Ce workflow les transmet à FastAPI qui en extrait les offres.",
+        "width": 560,
+        "height": 260
+      }
+    },
+    {
+      "id": "1b6e7134-2663-58fa-8adc-7a5a8e730888",
+      "name": "Nouvel email (Alertes-Emploi)",
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "mailbox": "Alertes-Emploi",
+        "postProcessAction": "read",
+        "format": "simple",
+        "options": {}
+      },
+      "credentials": {
+        "imap": {
+          "id": "",
+          "name": "IMAP (à configurer)"
+        }
+      }
+    },
+    {
+      "id": "fcb12e83-95fb-5774-97f7-3b782b2432e8",
+      "name": "Préparer l'alerte",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Transmet l'email d'alerte tel quel : FastAPI reconnaît le site (domaine de l'expéditeur)\n// et extrait les offres (titre + lien). Aucune page du site n'est visitée.\nconst from = String($json.from || '');\nconst email = (from.match(/<([^>]+)>/) || [null, from])[1].trim();\nconst messageId = $json.messageId || ($json.metadata && $json.metadata['message-id']) || null;\nreturn {\n  json: {\n    sender_email: email,\n    subject: $json.subject || null,\n    html: $json.textHtml || null,\n    text: $json.textPlain || null,\n    message_id: messageId,\n  },\n};",
+        "mode": "runOnceForEachItem"
+      }
+    },
+    {
+      "id": "5eda6c36-5026-59e9-98e4-e635091c1a1c",
+      "name": "Envoyer à FastAPI",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GARRIX_API_URL }}/api/v1/webhooks/n8n/job-alert-email",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-N8N-Webhook-Secret",
+              "value": "={{ $env.N8N_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "X-N8N-Workflow",
+              "value": "job-alerts-email"
+            },
+            {
+              "name": "X-N8N-Execution-Id",
+              "value": "={{ $execution.id }}"
+            },
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $json.message_id || $execution.id }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ sender_email: $json.sender_email, subject: $json.subject, html: $json.html, text: $json.text }) }}"
+      }
+    }
+  ],
+  "connections": {
+    "Nouvel email (Alertes-Emploi)": {
+      "main": [
+        [
+          {
+            "node": "Préparer l'alerte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Préparer l'alerte": {
+      "main": [
+        [
+          {
+            "node": "Envoyer à FastAPI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Paris"
+  },
+  "pinData": {},
+  "tags": []
+}

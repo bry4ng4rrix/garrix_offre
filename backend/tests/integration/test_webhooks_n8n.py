@@ -236,7 +236,7 @@ def test_matching_maintenance_and_monitoring_webhooks(
     assert client.post(f"{WEBHOOKS}/matching/recalculate", headers=n8n_headers).status_code == 202
     assert client.post(f"{WEBHOOKS}/maintenance/expire-jobs", headers=n8n_headers).json()[
         "data"
-    ] == {"expired": 0, "archived": 0}
+    ] == {"expired": 0, "archived": 0, "stale_runs_failed": 0}
     summary = client.get(f"{WEBHOOKS}/monitoring/summary", headers=n8n_headers).json()["data"]
     assert summary["new_jobs_24h"] == 1
     alert = client.post(

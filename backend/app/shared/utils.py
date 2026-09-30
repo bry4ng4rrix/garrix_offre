@@ -107,7 +107,7 @@ def is_public_host(hostname: str) -> bool:
     except (socket.gaierror, UnicodeError):
         return False
     for address in addresses:
-        ip = ipaddress.ip_address(address.split("%", 1)[0])
+        ip = ipaddress.ip_address(str(address).split("%", 1)[0])
         if not ip.is_global:
             return False
     return bool(addresses)

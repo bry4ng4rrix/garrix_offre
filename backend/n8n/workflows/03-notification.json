@@ -1,0 +1,245 @@
+{
+  "id": "GarrixNotif000001",
+  "name": "Garrix - 3. Envoi des notifications",
+  "active": false,
+  "nodes": [
+    {
+      "id": "4fb03a1e-b59f-51c2-8976-7b6ca728d58c",
+      "name": "Note 65a377f0",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -300
+      ],
+      "parameters": {
+        "content": "## Notifications (NOTIFICATION_DELIVERY_MODE=n8n)\nFastAPI appelle ce webhook pour chaque notification à envoyer.\nLe secret X-N8N-Webhook-Secret est vérifié avant tout envoi.\nConfigurez les credentials Telegram et SMTP dans n8n.",
+        "width": 520,
+        "height": 260
+      }
+    },
+    {
+      "id": "32c7e158-467f-5f08-a46f-31ef44d645d2",
+      "name": "Webhook notification",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "garrix-notification",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "webhookId": "a5173196-d3bd-582f-98e7-64b0fb5c8a73"
+    },
+    {
+      "id": "d2cfd452-5084-5a1f-a8f5-f25dbd7cb84c",
+      "name": "Secret valide ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c4379402-4658-5ea3-82a0-eac2fdfd3dac",
+              "leftValue": "={{ $json.headers['x-n8n-webhook-secret'] }}",
+              "rightValue": "={{ $env.N8N_WEBHOOK_SECRET }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "e25e6f34-bf20-55ba-8418-abd766bf18ec",
+      "name": "Envoyer sur Telegram ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        460,
+        -120
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "9d2c33e8-86e6-5809-a034-b1a4634024f2",
+              "leftValue": "={{ $json.body.channels.telegram && !!$json.body.channels.telegram_chat_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "c0d6532b-c588-58d5-85d5-acdd98a716ab",
+      "name": "Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        700,
+        -120
+      ],
+      "parameters": {
+        "chatId": "={{ $json.body.channels.telegram_chat_id }}",
+        "text": "=<b>{{ $json.body.title }}</b>\n{{ $json.body.message }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "",
+          "name": "Telegram (à configurer)"
+        }
+      }
+    },
+    {
+      "id": "9c137484-85dc-5dd8-bc41-858918a69cde",
+      "name": "Envoyer par email ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        460,
+        120
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c498a17d-1c5e-55ec-a1e5-b605ea1c9cbe",
+              "leftValue": "={{ $json.body.channels.email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "d9b7170d-b627-5b58-afd4-89917ed26685",
+      "name": "Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        700,
+        120
+      ],
+      "parameters": {
+        "fromEmail": "={{ $env.SMTP_FROM }}",
+        "toEmail": "={{ $json.body.channels.email_to }}",
+        "subject": "={{ $json.body.title }}",
+        "emailFormat": "text",
+        "text": "={{ $json.body.message }}",
+        "options": {}
+      },
+      "credentials": {
+        "smtp": {
+          "id": "",
+          "name": "SMTP (à configurer)"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook notification": {
+      "main": [
+        [
+          {
+            "node": "Secret valide ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Secret valide ?": {
+      "main": [
+        [
+          {
+            "node": "Envoyer sur Telegram ?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Envoyer par email ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Envoyer sur Telegram ?": {
+      "main": [
+        [
+          {
+            "node": "Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Envoyer par email ?": {
+      "main": [
+        [
+          {
+            "node": "Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Paris"
+  },
+  "pinData": {},
+  "tags": []
+}

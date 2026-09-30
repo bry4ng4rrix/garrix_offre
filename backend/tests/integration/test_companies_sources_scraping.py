@@ -275,3 +275,56 @@ def test_cannot_cancel_finished_run(
     ]
     response = client.post(f"{API}/scraping/runs/{run_id}/cancel", headers=admin_headers)
     assert response.json()["error"]["code"] == "SCRAPING_RUN_FINISHED"
+
+
+def test_ingestion_logs_at_info_level(
+    client: TestClient, admin_headers: dict[str, str], caplog: pytest.LogCaptureFixture
+) -> None:
+    """Non-régression : une clé réservée ("created"...) dans un log faisait planter la collecte."""
+    import logging
+
+    caplog.set_level(logging.INFO)
+    create_job(client, admin_headers)
+    assert any(record.getMessage() == "Jobs ingested" for record in caplog.records)
+
+
+def test_unexpected_error_marks_run_failed(
+    client: TestClient,
+    admin_headers: dict[str, str],
+    fake_web: list[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from app.modules.scraping.pipeline import JobIngestionService
+
+    def boom(*_args: object, **_kwargs: object) -> None:
+        raise RuntimeError("unexpected")
+
+    monkeypatch.setattr(JobIngestionService, "ingest", boom)
+    source = create_rss_source(client, admin_headers)
+    run_id = client.post(f"{API}/sources/{source['id']}/run", headers=admin_headers).json()["data"][
+        "run_id"
+    ]
+    run = client.get(f"{API}/scraping/runs/{run_id}", headers=admin_headers).json()["data"]
+    assert run["status"] == "failed"
+    assert run["error_message"] == "Unexpected error: RuntimeError"
+
+
+def test_stale_runs_are_closed(client: TestClient, admin_headers: dict[str, str], db) -> None:  # type: ignore[no-untyped-def]
+    from datetime import timedelta
+
+    from app.modules.scraping.models import ScrapingRun
+    from app.modules.scraping.service import ScrapingService
+    from app.shared.enums import ScrapingRunStatus, ScrapingTrigger
+    from app.shared.utils import utcnow
+
+    source = client.get(f"{API}/sources?type=rss", headers=admin_headers).json()["data"]["items"][0]
+    stale = ScrapingRun(
+        source_id=source["id"], trigger=ScrapingTrigger.N8N, status=ScrapingRunStatus.RUNNING
+    )
+    db.add(stale)
+    db.commit()
+    stale.created_at = utcnow() - timedelta(hours=3)
+    db.commit()
+    assert ScrapingService(db).fail_stale_runs() == 1
+    db.refresh(stale)
+    assert stale.status == ScrapingRunStatus.FAILED

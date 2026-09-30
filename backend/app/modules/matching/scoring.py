@@ -306,7 +306,7 @@ def score_experience_level(
     job_rank = level_ranks.get(job.experience_level or "")
     if job.experience_level and job.experience_level in profile.experience_levels:
         parts.append(1.0)
-            reasons.append(f"Niveau recherché ({job.experience_level})")
+        reasons.append(f"Niveau recherché ({job.experience_level})")
     if not parts and job_rank is not None:
         profile_rank = level_ranks.get(profile.experience_level or "")
         if profile_rank is not None:

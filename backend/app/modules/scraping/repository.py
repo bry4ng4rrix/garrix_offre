@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Select, func, select
+from sqlalchemy import Select, func, select, update
 
 from app.modules.scraping.models import ScrapingRun
 from app.shared.enums import ScrapingRunStatus
@@ -13,7 +13,7 @@ class ScrapingRunRepository(BaseRepository[ScrapingRun]):
 
     def list_query(
         self, source_id: uuid.UUID | None = None, status: ScrapingRunStatus | None = None
-    ) -> Select[tuple[ScrapingRun]]:
+    ) -> Select[ScrapingRun]:
         stmt = select(ScrapingRun).order_by(ScrapingRun.created_at.desc())
         if source_id:
             stmt = stmt.where(ScrapingRun.source_id == source_id)
@@ -24,6 +24,17 @@ class ScrapingRunRepository(BaseRepository[ScrapingRun]):
     def current_status(self, run_id: uuid.UUID) -> ScrapingRunStatus | None:
         """Statut en base (sans recharger l'objet en mémoire) : détecte une annulation."""
         return self.session.scalar(select(ScrapingRun.status).where(ScrapingRun.id == run_id))
+
+    def fail_stale(self, before: datetime, message: str) -> int:
+        result = self.session.execute(
+            update(ScrapingRun)
+            .where(
+                ScrapingRun.status.in_([ScrapingRunStatus.PENDING, ScrapingRunStatus.RUNNING]),
+                ScrapingRun.created_at < before,
+            )
+            .values(status=ScrapingRunStatus.FAILED, error_message=message, finished_at=func.now())
+        )
+        return int(getattr(result, "rowcount", 0) or 0)
 
     def get_by_external_execution(self, execution_id: str) -> ScrapingRun | None:
         return self.session.scalar(

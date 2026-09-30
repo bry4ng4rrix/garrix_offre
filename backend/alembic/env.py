@@ -6,9 +6,9 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-import app.modules.models  # noqa: F401 - enregistre tous les modèles dans Base.metadata
 from app.core.config import get_settings
 from app.core.database import Base
+from app.modules import models  # noqa: F401 - enregistre tous les modèles dans Base.metadata
 
 config = context.config
 # Lancé depuis la ligne de commande : logging d'Alembic. Lancé depuis l'application

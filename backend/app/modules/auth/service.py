@@ -42,9 +42,9 @@ class AuthService:
         self.audit = AuditService(session)
 
     def register(self, email: str, password: str) -> User:
-        settings = get_settings()
-        # La première inscription est toujours autorisée (création de l'administrateur).
-        if not settings.ALLOW_REGISTRATION and self.users.count() > 0:
+        # Sur un serveur public, ALLOW_REGISTRATION=false : l'administrateur est alors créé en
+        # ligne de commande (python -m scripts.create_admin), personne ne peut s'inscrire.
+        if not get_settings().ALLOW_REGISTRATION:
             raise PermissionDeniedError("Registration is disabled", code="REGISTRATION_DISABLED")
         user = UserService(self.session).create_user(email, password)
         self.audit.record(

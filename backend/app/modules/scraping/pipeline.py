@@ -12,6 +12,7 @@ l'enregistrement des autres (RG-19).
 """
 
 import logging
+import uuid
 from dataclasses import dataclass, field
 
 from sqlalchemy.exc import SQLAlchemyError
@@ -72,7 +73,7 @@ class JobIngestionService:
         source: Source,
         *,
         origin: DataOrigin,
-        created_by_id: object | None = None,
+        created_by_id: uuid.UUID | None = None,
         notify: bool = True,
     ) -> IngestionResult:
         result = IngestionResult(received=len(payloads))
@@ -135,10 +136,11 @@ class JobIngestionService:
             "Jobs ingested",
             extra={
                 "source": source.name,
-                "received": result.received,
-                "created": result.created,
-                "duplicates": result.duplicates,
-                "invalid": result.invalid,
+                # Attention : "created", "name", "message"... sont réservés par le module logging.
+                "jobs_received": result.received,
+                "jobs_created": result.created,
+                "jobs_duplicates": result.duplicates,
+                "jobs_invalid": result.invalid,
             },
         )
         return result
@@ -151,7 +153,7 @@ class JobIngestionService:
         outcome: ValidationOutcome,
         source: Source,
         origin: DataOrigin,
-        created_by_id: object | None,
+        created_by_id: uuid.UUID | None,
     ) -> _Processed:
         company = self._company(job_data, source, origin)
         duplicate = self.deduplication.find_duplicate(
@@ -285,7 +287,9 @@ class JobIngestionService:
 
     # --- NOTIFY ---
 
-    def _notify(self, high_matches: dict[object, list[ScoredJob]], created_jobs: list[Job]) -> None:
+    def _notify(
+        self, high_matches: dict[uuid.UUID, list[ScoredJob]], created_jobs: list[Job]
+    ) -> None:
         notifications = NotificationService(self.session)
         created_ids = {job.id for job in created_jobs}
         for user_id, scored_jobs in high_matches.items():
@@ -295,7 +299,7 @@ class JobIngestionService:
             ]:
                 job = item.job
                 notifications.notify(
-                    user_id,  # type: ignore[arg-type]
+                    user_id,
                     NotificationType.HIGH_MATCH,
                     f"Offre compatible à {item.result.score}% : {job.title}"[:255],
                     f"{job.title} — {job.company.name if job.company else 'Entreprise non précisée'}",

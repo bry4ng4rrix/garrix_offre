@@ -1,0 +1,122 @@
+{
+  "id": "GarrixMatching001",
+  "name": "Garrix - 2. Recalcul du matching",
+  "active": false,
+  "nodes": [
+    {
+      "id": "04896daf-db43-55c6-a84b-9a4e2677f261",
+      "name": "Note 5e46a350",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -240
+      ],
+      "parameters": {
+        "content": "## Recalcul du matching\nChaque nuit, FastAPI recalcule les scores de tous les utilisateurs (utile après des changements de profil ou de poids).",
+        "width": 420,
+        "height": 260
+      }
+    },
+    {
+      "id": "bc0ab25d-02b2-5275-a6ae-fad5fce6686b",
+      "name": "Chaque jour à 5 h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 5
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "379b0181-f6d4-523f-8fc5-ecfc62edffd7",
+      "name": "Lancer manuellement",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        160
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "72329e4d-a77d-55ce-8d50-e67f20033d15",
+      "name": "Recalculer les scores",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GARRIX_API_URL }}/api/v1/webhooks/n8n/matching/recalculate",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-N8N-Webhook-Secret",
+              "value": "={{ $env.N8N_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "X-N8N-Workflow",
+              "value": "matching"
+            },
+            {
+              "name": "X-N8N-Execution-Id",
+              "value": "={{ $execution.id }}"
+            },
+            {
+              "name": "Idempotency-Key",
+              "value": "matching-{{ $now.toFormat('yyyy-MM-dd') }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Chaque jour à 5 h": {
+      "main": [
+        [
+          {
+            "node": "Recalculer les scores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lancer manuellement": {
+      "main": [
+        [
+          {
+            "node": "Recalculer les scores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Paris"
+  },
+  "pinData": {},
+  "tags": []
+}

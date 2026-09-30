@@ -23,7 +23,7 @@ class RecruiterRepository(BaseRepository[Recruiter]):
 
     def search_query(
         self, search: str | None = None, company_id: uuid.UUID | None = None
-    ) -> Select[tuple[Recruiter]]:
+    ) -> Select[Recruiter]:
         stmt = select(Recruiter).order_by(Recruiter.name, Recruiter.last_name)
         if search:
             pattern = f"%{search}%"

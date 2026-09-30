@@ -26,9 +26,7 @@ from app.modules.scraping.http import ScrapingError
 from app.modules.scraping.registry import register_adapter
 from app.shared.enums import ContactSource, SourceType
 
-TOKEN_URL = (  # noqa: S105 - URL publique du service OAuth, pas un secret
-    "https://entreprise.francetravail.fr/connexion/oauth2/access_token?realm=%2Fpartenaire"
-)
+OAUTH_URL = "https://entreprise.francetravail.fr/connexion/oauth2/access_token?realm=%2Fpartenaire"
 SEARCH_URL = "https://api.francetravail.io/partenaire/offresdemploi/v2/offres/search"
 OFFER_PAGE_URL = "https://candidat.francetravail.fr/offres/recherche/detail/{id}"
 SCOPE = "api_offresdemploiv2 o2dsoffre"
@@ -101,7 +99,7 @@ class FranceTravailAdapter(SourceAdapter):
                 "FRANCE_TRAVAIL_CLIENT_ID / FRANCE_TRAVAIL_CLIENT_SECRET are not configured"
             )
         response = self.http.post_form(
-            TOKEN_URL,
+            OAUTH_URL,
             {
                 "grant_type": "client_credentials",
                 "client_id": settings.FRANCE_TRAVAIL_CLIENT_ID,

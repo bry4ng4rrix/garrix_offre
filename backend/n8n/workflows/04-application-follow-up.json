@@ -1,0 +1,195 @@
+{
+  "id": "GarrixFollowUp001",
+  "name": "Garrix - 4. Relances de candidatures",
+  "active": false,
+  "nodes": [
+    {
+      "id": "3522fa2c-2c59-5dc7-9b6a-f29ae21e3a2a",
+      "name": "Note b84517da",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -260
+      ],
+      "parameters": {
+        "content": "## Relances\nChaque matin : les candidatures envoyées sans réponse dont la date de relance est passée passent au statut FOLLOW_UP (l'utilisateur est notifié).\nAucun email n'est envoyé au recruteur automatiquement.",
+        "width": 420,
+        "height": 260
+      }
+    },
+    {
+      "id": "eda03a0f-07d4-568b-a709-bad02936e6b8",
+      "name": "Chaque jour à 9 h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "379b0181-f6d4-523f-8fc5-ecfc62edffd7",
+      "name": "Lancer manuellement",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        160
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "c6b47b29-6da1-50a7-b163-87e6f33e9847",
+      "name": "Candidatures à relancer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.GARRIX_API_URL }}/api/v1/webhooks/n8n/applications/follow-ups-due",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-N8N-Webhook-Secret",
+              "value": "={{ $env.N8N_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "X-N8N-Workflow",
+              "value": "application-follow-up"
+            },
+            {
+              "name": "X-N8N-Execution-Id",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        }
+      }
+    },
+    {
+      "id": "558f70da-477e-5e66-b187-561cde11d1fb",
+      "name": "Une candidature par élément",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "fieldToSplitOut": "data",
+        "options": {}
+      }
+    },
+    {
+      "id": "9f9d1911-0c99-5c98-8164-8f58b6f5e8a9",
+      "name": "Passer en relance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GARRIX_API_URL }}/api/v1/webhooks/n8n/application-status",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-N8N-Webhook-Secret",
+              "value": "={{ $env.N8N_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "X-N8N-Workflow",
+              "value": "application-follow-up"
+            },
+            {
+              "name": "X-N8N-Execution-Id",
+              "value": "={{ $execution.id }}"
+            },
+            {
+              "name": "Idempotency-Key",
+              "value": "follow-up-{{ $json.application_id }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ application_id: $json.application_id, status: 'follow_up', note: 'Relance à prévoir (n8n)' }) }}"
+      }
+    }
+  ],
+  "connections": {
+    "Chaque jour à 9 h": {
+      "main": [
+        [
+          {
+            "node": "Candidatures à relancer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lancer manuellement": {
+      "main": [
+        [
+          {
+            "node": "Candidatures à relancer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Candidatures à relancer": {
+      "main": [
+        [
+          {
+            "node": "Une candidature par élément",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Une candidature par élément": {
+      "main": [
+        [
+          {
+            "node": "Passer en relance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Paris"
+  },
+  "pinData": {},
+  "tags": []
+}

@@ -15,10 +15,10 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-import app.modules.models  # noqa: F401 - enregistre tous les modèles
 from app.core.config import get_settings
 from app.core.database import session_scope
 from app.core.logging import setup_logging
+from app.modules import models  # noqa: F401 - enregistre tous les modèles
 from app.modules.auth.service import AuthService
 from app.modules.contract_types.models import ContractType
 from app.modules.experiences.models import ExperienceLevel
@@ -610,10 +610,10 @@ def seed_dev_data() -> None:
                 country="France",
                 years_of_experience=4,
                 experience_level="mid",
-                languages=[{"code": "fr", "level": "native"}, {"code": "en", "level": "fluent"}],  # type: ignore[list-item]
+                languages=[{"code": "fr", "level": "native"}, {"code": "en", "level": "fluent"}],
                 minimum_salary=40000,
                 currency="EUR",
-                salary_period="year",  # type: ignore[arg-type]
+                salary_period="year",
             ),
         )
         skills = SkillService(session)
@@ -621,7 +621,7 @@ def seed_dev_data() -> None:
         for name, level in (("Python", "advanced"), ("Django", "advanced"), ("React", "intermediate"),
                             ("TypeScript", "intermediate"), ("PostgreSQL", "advanced"), ("Docker", "intermediate")):  # fmt: skip
             if normalize_text(name) not in existing:
-                skills.add_skill(user, ProfileSkillCreate(name=name, level=level))  # type: ignore[arg-type]
+                skills.add_skill(user, ProfileSkillCreate(name=name, level=level))
         PreferencesService(session).update_preferences(
             user,
             PreferencesUpdate(
@@ -629,7 +629,7 @@ def seed_dev_data() -> None:
                 contract_types=["cdi", "freelance"],
                 skills=["Python", "React"],
                 experience_levels=["mid", "senior"],
-                locations=[{"city": "Paris", "country": "France"}],  # type: ignore[list-item]
+                locations=[{"city": "Paris", "country": "France"}],
                 remote=True,
                 hybrid=True,
                 languages=["fr", "en"],

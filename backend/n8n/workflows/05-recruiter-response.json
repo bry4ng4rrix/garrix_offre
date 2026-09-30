@@ -1,0 +1,173 @@
+{
+  "id": "GarrixRecruiter01",
+  "name": "Garrix - 5. Réponses des recruteurs",
+  "active": false,
+  "nodes": [
+    {
+      "id": "7b5901b1-1d63-53d3-a4d7-d041b1ebea69",
+      "name": "Note ef408bab",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -280
+      ],
+      "parameters": {
+        "content": "## Réponses des recruteurs\nLit le dossier IMAP \"Candidatures\" (créez une règle de tri dans votre messagerie), puis transmet chaque email à FastAPI : association à la candidature, analyse (entretien, refus...), notification.\nIdempotent grâce au Message-ID.",
+        "width": 520,
+        "height": 260
+      }
+    },
+    {
+      "id": "e93a3783-fe85-5dfd-97aa-06ecfba985cb",
+      "name": "Nouvel email (Candidatures)",
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "mailbox": "Candidatures",
+        "postProcessAction": "read",
+        "format": "simple",
+        "options": {}
+      },
+      "credentials": {
+        "imap": {
+          "id": "",
+          "name": "IMAP (à configurer)"
+        }
+      }
+    },
+    {
+      "id": "ee9b6a2a-3230-5fe4-8817-47db5459437e",
+      "name": "Préparer la réponse",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Prépare l'email reçu pour FastAPI (qui fait la corrélation et l'analyse).\n// Un identifiant \"[ref:<uuid>]\" dans l'objet ou le corps permet l'association directe.\nconst from = String($json.from || '');\nconst email = (from.match(/<([^>]+)>/) || [null, from])[1].trim();\nconst name = from.includes('<') ? from.split('<')[0].replace(/\"/g, '').trim() : null;\nconst body = $json.textPlain || $json.text || $json.textHtml || '';\nconst ref = `${$json.subject || ''} ${body}`.match(/\\[ref:([0-9a-f-]{36})\\]/i);\nconst messageId = $json.messageId || ($json.metadata && $json.metadata['message-id']) || null;\nreturn {\n  json: {\n    application_id: ref ? ref[1] : null,\n    sender_email: email,\n    sender_name: name || null,\n    subject: $json.subject || null,\n    body: String(body).slice(0, 90000),\n    received_at: $json.date ? new Date($json.date).toISOString() : null,\n    message_id: messageId,\n  },\n};",
+        "mode": "runOnceForEachItem"
+      }
+    },
+    {
+      "id": "b7215495-9109-5d0a-8f17-dbfd43f08f3b",
+      "name": "Expéditeur valide ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        460,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ebc60092-942e-51fc-923c-aa0e916eb49f",
+              "leftValue": "={{ $json.sender_email }}",
+              "rightValue": "@",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "5eda6c36-5026-59e9-98e4-e635091c1a1c",
+      "name": "Envoyer à FastAPI",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        700,
+        -60
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GARRIX_API_URL }}/api/v1/webhooks/n8n/recruiter-response",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-N8N-Webhook-Secret",
+              "value": "={{ $env.N8N_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "X-N8N-Workflow",
+              "value": "recruiter-response"
+            },
+            {
+              "name": "X-N8N-Execution-Id",
+              "value": "={{ $execution.id }}"
+            },
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $json.message_id || $execution.id }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}"
+      }
+    }
+  ],
+  "connections": {
+    "Nouvel email (Candidatures)": {
+      "main": [
+        [
+          {
+            "node": "Préparer la réponse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Préparer la réponse": {
+      "main": [
+        [
+          {
+            "node": "Expéditeur valide ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Expéditeur valide ?": {
+      "main": [
+        [
+          {
+            "node": "Envoyer à FastAPI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Paris"
+  },
+  "pinData": {},
+  "tags": []
+}

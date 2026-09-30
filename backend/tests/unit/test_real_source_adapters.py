@@ -126,9 +126,7 @@ def test_france_travail_oauth_and_mapping(monkeypatch: pytest.MonkeyPatch) -> No
 
 
 def alert_sources() -> list[Source]:
-    return [
-        Source(**source) for source in ALERT_EMAIL_SOURCES
-    ]
+    return [Source(**source) for source in ALERT_EMAIL_SOURCES]
 
 
 def test_alert_email_extracts_job_links_only() -> None:

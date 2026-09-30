@@ -18,7 +18,7 @@ class CompanyRepository(BaseRepository[Company]):
         city: str | None = None,
         country: str | None = None,
         industry: str | None = None,
-    ) -> Select[tuple[Company]]:
+    ) -> Select[Company]:
         stmt = select(Company).order_by(Company.name)
         if search:
             pattern = f"%{search}%"

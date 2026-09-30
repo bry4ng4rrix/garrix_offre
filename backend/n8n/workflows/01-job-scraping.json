@@ -1,0 +1,497 @@
+{
+  "id": "GarrixScraping001",
+  "name": "Garrix - 1. Collecte des offres",
+  "active": false,
+  "nodes": [
+    {
+      "id": "95f6d7b3-10a5-502d-b6af-f920e563bae8",
+      "name": "Note 454c2b1b",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -320
+      ],
+      "parameters": {
+        "content": "## Collecte des offres\n1. Lit les sources actives (FastAPI)\n2. `fetch_mode=backend` : FastAPI lit la source avec son adapter (API, RSS, HTML autorisé)\n3. `fetch_mode=n8n` : n8n télécharge le flux RSS, le convertit, puis l'envoie à FastAPI\n4. FastAPI : normalisation → validation → déduplication → enregistrement → matching → notification (si score ≥ seuil de l'utilisateur)",
+        "width": 620,
+        "height": 220
+      }
+    },
+    {
+      "id": "09d5a487-e126-588a-a486-401829f86339",
+      "name": "Toutes les 3 heures",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "379b0181-f6d4-523f-8fc5-ecfc62edffd7",
+      "name": "Lancer manuellement",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        160
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "7a424537-71df-535e-ad25-e62d3d97ae04",
+      "name": "Lire les sources actives",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.GARRIX_API_URL }}/api/v1/webhooks/n8n/sources",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-N8N-Webhook-Secret",
+              "value": "={{ $env.N8N_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "X-N8N-Workflow",
+              "value": "job-scraping"
+            },
+            {
+              "name": "X-N8N-Execution-Id",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        }
+      }
+    },
+    {
+      "id": "59f6aa2b-e904-51a6-adba-89393fe76a50",
+      "name": "Une source par élément",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "fieldToSplitOut": "data",
+        "options": {}
+      }
+    },
+    {
+      "id": "8da99034-83f4-55d9-b54b-e3aa574cfe8c",
+      "name": "Collecte par le backend ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3337d3b7-83c6-579e-a056-1ddfb03b60d6",
+              "leftValue": "={{ $json.fetch_mode }}",
+              "rightValue": "backend",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "15e2f567-3e42-5d25-93d2-b42c7782c3c7",
+      "name": "FastAPI collecte la source",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        -120
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GARRIX_API_URL }}/api/v1/webhooks/n8n/sources/{{ $json.id }}/run",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-N8N-Webhook-Secret",
+              "value": "={{ $env.N8N_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "X-N8N-Workflow",
+              "value": "job-scraping"
+            },
+            {
+              "name": "X-N8N-Execution-Id",
+              "value": "={{ $execution.id }}"
+            },
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}-{{ $json.id }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        }
+      }
+    },
+    {
+      "id": "34176c9d-30d0-5208-9ecc-71f621525617",
+      "name": "Télécharger le flux",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        120
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.configuration.feed_url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "GarrixOffreBot/1.0 (n8n)"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000,
+          "response": {
+            "response": {
+              "responseFormat": "text",
+              "outputPropertyName": "data"
+            }
+          }
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "bd4b167f-1696-5724-9cc8-41580aa4f38e",
+      "name": "XML vers JSON",
+      "type": "n8n-nodes-base.xml",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        60
+      ],
+      "parameters": {
+        "mode": "xmlToJson",
+        "dataPropertyName": "data",
+        "options": {
+          "explicitArray": false
+        }
+      }
+    },
+    {
+      "id": "acb924e9-d8e4-5cdd-830b-053d5a9d4820",
+      "name": "Normaliser les offres",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        60
+      ],
+      "parameters": {
+        "jsCode": "// Transforme le flux RSS (converti en JSON par le nœud XML) au format JobPayload de FastAPI.\n// La logique métier (normalisation fine, déduplication, matching) reste dans FastAPI.\nconst source = $('Collecte par le backend ?').item.json;\nconst channel = ($json.rss && $json.rss.channel) || {};\nlet entries = channel.item || [];\nif (!Array.isArray(entries)) entries = [entries];\nconst text = (value) => (value && typeof value === 'object' ? value._ || '' : value || '');\nconst jobs = entries.slice(0, 200).map((entry) => ({\n  external_id: text(entry.guid) || text(entry.link),\n  title: text(entry.title),\n  url: text(entry.link),\n  description: text(entry.description),\n  published_at: entry.pubDate ? new Date(text(entry.pubDate)).toISOString() : null,\n})).filter((job) => job.title);\nreturn { json: { source_id: source.id, source_name: source.name, jobs } };",
+        "mode": "runOnceForEachItem"
+      }
+    },
+    {
+      "id": "5f2b68bf-d927-5737-b938-27237b41461a",
+      "name": "Envoyer les offres à FastAPI",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1560,
+        60
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GARRIX_API_URL }}/api/v1/webhooks/n8n/jobs",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-N8N-Webhook-Secret",
+              "value": "={{ $env.N8N_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "X-N8N-Workflow",
+              "value": "job-scraping"
+            },
+            {
+              "name": "X-N8N-Execution-Id",
+              "value": "={{ $execution.id }}"
+            },
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}-{{ $json.source_id }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ source_id: $json.source_id, jobs: $json.jobs }) }}"
+      }
+    },
+    {
+      "id": "8cb08ffd-0120-5259-9919-024783127437",
+      "name": "Bilan de collecte (succès)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1780,
+        60
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GARRIX_API_URL }}/api/v1/webhooks/n8n/scraping-status",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-N8N-Webhook-Secret",
+              "value": "={{ $env.N8N_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "X-N8N-Workflow",
+              "value": "job-scraping"
+            },
+            {
+              "name": "X-N8N-Execution-Id",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ source_id: $('Normaliser les offres').item.json.source_id, status: 'success', execution_id: $execution.id + '-' + $('Normaliser les offres').item.json.source_id, jobs_found: $json.data.received, jobs_created: $json.data.created }) }}"
+      }
+    },
+    {
+      "id": "e1badd87-4d3b-58f4-9605-0f37a9986333",
+      "name": "Préparer le rapport d'erreur",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        260
+      ],
+      "parameters": {
+        "jsCode": "// La lecture du flux a échoué : on le signale à FastAPI (notification aux administrateurs).\nconst source = $('Collecte par le backend ?').item.json;\nreturn {\n  json: {\n    source_id: source.id,\n    status: 'failed',\n    execution_id: `${$execution.id}-${source.id}`,\n    error_message: ($json.error && ($json.error.message || JSON.stringify($json.error))) || 'Erreur de lecture du flux',\n  },\n};",
+        "mode": "runOnceForEachItem"
+      }
+    },
+    {
+      "id": "98431766-1ed4-5981-ab08-7a4db74acbcc",
+      "name": "Bilan de collecte (échec)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1340,
+        260
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GARRIX_API_URL }}/api/v1/webhooks/n8n/scraping-status",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-N8N-Webhook-Secret",
+              "value": "={{ $env.N8N_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "X-N8N-Workflow",
+              "value": "job-scraping"
+            },
+            {
+              "name": "X-N8N-Execution-Id",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}"
+      }
+    }
+  ],
+  "connections": {
+    "Toutes les 3 heures": {
+      "main": [
+        [
+          {
+            "node": "Lire les sources actives",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lancer manuellement": {
+      "main": [
+        [
+          {
+            "node": "Lire les sources actives",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lire les sources actives": {
+      "main": [
+        [
+          {
+            "node": "Une source par élément",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Une source par élément": {
+      "main": [
+        [
+          {
+            "node": "Collecte par le backend ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collecte par le backend ?": {
+      "main": [
+        [
+          {
+            "node": "FastAPI collecte la source",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Télécharger le flux",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Télécharger le flux": {
+      "main": [
+        [
+          {
+            "node": "XML vers JSON",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Préparer le rapport d'erreur",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "XML vers JSON": {
+      "main": [
+        [
+          {
+            "node": "Normaliser les offres",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normaliser les offres": {
+      "main": [
+        [
+          {
+            "node": "Envoyer les offres à FastAPI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Envoyer les offres à FastAPI": {
+      "main": [
+        [
+          {
+            "node": "Bilan de collecte (succès)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Préparer le rapport d'erreur": {
+      "main": [
+        [
+          {
+            "node": "Bilan de collecte (échec)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Paris"
+  },
+  "pinData": {},
+  "tags": []
+}

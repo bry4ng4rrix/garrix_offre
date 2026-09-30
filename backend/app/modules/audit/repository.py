@@ -15,7 +15,7 @@ class AuditLogRepository(BaseRepository[AuditLog]):
         entity_type: str | None = None,
         entity_id: str | None = None,
         actor_id: uuid.UUID | None = None,
-    ) -> Select[tuple[AuditLog]]:
+    ) -> Select[AuditLog]:
         stmt = select(AuditLog).order_by(AuditLog.created_at.desc())
         if action:
             stmt = stmt.where(AuditLog.action.startswith(action))

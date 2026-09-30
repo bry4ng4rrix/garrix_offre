@@ -17,7 +17,7 @@ class SourceRepository(BaseRepository[Source]):
         source_type: SourceType | None = None,
         scraping_enabled: bool | None = None,
         category: SourceCategory | None = None,
-    ) -> Select[tuple[Source]]:
+    ) -> Select[Source]:
         stmt = select(Source).order_by(Source.priority.desc(), Source.name)
         if enabled is not None:
             stmt = stmt.where(Source.enabled.is_(enabled))

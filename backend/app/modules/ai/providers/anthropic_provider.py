@@ -18,6 +18,7 @@ import logging
 from typing import Any
 
 import anthropic
+from anthropic.types.beta import BetaMessageParam, BetaOutputConfigParam
 
 from app.modules.ai.base import AIProvider, AIProviderError, Effort
 
@@ -36,15 +37,14 @@ class AnthropicProvider(AIProvider):
         self.client = anthropic.Anthropic(api_key=api_key, timeout=timeout, max_retries=2)
 
     def complete_text(self, system: str, prompt: str, effort: Effort = "medium") -> str:
-        return self._call(system, prompt, {"effort": effort})
+        return self._call(system, prompt, BetaOutputConfigParam(effort=effort))
 
     def complete_json(
         self, system: str, prompt: str, schema: dict[str, Any], effort: Effort = "low"
     ) -> dict[str, Any]:
-        output_config: dict[str, Any] = {
-            "effort": effort,
-            "format": {"type": "json_schema", "schema": schema},
-        }
+        output_config = BetaOutputConfigParam(
+            effort=effort, format={"type": "json_schema", "schema": schema}
+        )
         text = self._call(system, prompt, output_config)
         try:
             data = json.loads(text)
@@ -58,14 +58,15 @@ class AnthropicProvider(AIProvider):
             )
         return data
 
-    def _call(self, system: str, prompt: str, output_config: dict[str, Any]) -> str:
+    def _call(self, system: str, prompt: str, output_config: BetaOutputConfigParam) -> str:
+        messages: list[BetaMessageParam] = [{"role": "user", "content": prompt}]
         try:
             response = self.client.beta.messages.create(
                 model=self.model,
                 max_tokens=MAX_TOKENS,
                 system=system,
-                messages=[{"role": "user", "content": prompt}],
-                output_config=output_config,  # type: ignore[arg-type]
+                messages=messages,
+                output_config=output_config,
                 betas=[FALLBACK_BETA],
                 fallbacks="default",
             )
