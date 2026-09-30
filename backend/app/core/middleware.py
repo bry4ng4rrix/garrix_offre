@@ -5,9 +5,10 @@ c'est un peu plus verbeux qu'un décorateur, mais cela permet de contrôler le b
 reçu morceau par morceau (indispensable pour limiter la taille des uploads).
 
 Ordre d'exécution (du plus externe au plus interne) :
-1. RequestLoggingMiddleware : identifiant de requête + log de chaque requête
-2. RateLimitMiddleware      : limite globale de requêtes par IP
-3. BodySizeLimitMiddleware  : refuse les bodies trop gros (413)
+1. RequestLoggingMiddleware  : identifiant de requête + log de chaque requête
+2. SecurityHeadersMiddleware : en-têtes de sécurité sur toutes les réponses
+3. RateLimitMiddleware       : limite globale de requêtes par IP
+4. BodySizeLimitMiddleware   : refuse les bodies trop gros (413)
 """
 
 import logging
@@ -28,6 +29,11 @@ request_logger = logging.getLogger("app.request")
 
 _REQUEST_ID_PATTERN = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
 QUIET_PATHS = {"/health", "/ready"}
+SECURITY_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "no-referrer",
+}
 
 
 class RequestLoggingMiddleware:
@@ -78,6 +84,27 @@ class RequestLoggingMiddleware:
                     "user_id": state.get("user_id"),
                 },
             )
+
+
+class SecurityHeadersMiddleware:
+    """Ajoute les en-têtes de sécurité HTTP (l'API est exposée directement, sans reverse proxy)."""
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        async def send_with_headers(message: Message) -> None:
+            if message["type"] == "http.response.start":
+                headers = MutableHeaders(scope=message)
+                for name, value in SECURITY_HEADERS.items():
+                    headers.setdefault(name, value)
+            await send(message)
+
+        await self.app(scope, receive, send_with_headers)
 
 
 class RateLimitMiddleware:

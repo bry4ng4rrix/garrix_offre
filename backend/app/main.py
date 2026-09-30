@@ -22,6 +22,7 @@ from app.core.middleware import (
     BodySizeLimitMiddleware,
     RateLimitMiddleware,
     RequestLoggingMiddleware,
+    SecurityHeadersMiddleware,
 )
 from app.core.redis import create_async_redis
 from app.modules import models  # noqa: F401 - enregistre tous les modèles SQLAlchemy
@@ -112,6 +113,7 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
         expose_headers=["X-Request-ID"],
     )
+    app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(RequestLoggingMiddleware)
 
     app.include_router(health_router)

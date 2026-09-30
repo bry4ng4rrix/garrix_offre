@@ -17,6 +17,10 @@ def test_health_and_ready(client: TestClient) -> None:
     response = client.get("/ready")
     assert response.status_code == 200
     assert response.headers["X-Request-ID"]
+    # En-têtes de sécurité (l'API est exposée directement, sans reverse proxy).
+    assert response.headers["X-Content-Type-Options"] == "nosniff"
+    assert response.headers["X-Frame-Options"] == "DENY"
+    assert response.headers["Referrer-Policy"] == "no-referrer"
 
 
 def test_register_first_user_becomes_admin(client: TestClient) -> None:

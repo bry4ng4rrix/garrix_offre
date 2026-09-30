@@ -70,7 +70,7 @@ worker: ## Lance le worker Celery en local
 docker-build: ## Construit l'image Docker
 	$(COMPOSE) build
 
-docker-up: ## Démarre toute la stack (API, worker, PostgreSQL, Redis, n8n, nginx)
+docker-up: ## Démarre toute la stack (API, worker, PostgreSQL, Redis, n8n)
 	$(COMPOSE) up -d --build
 
 docker-down: ## Arrête la stack (les données sont conservées dans les volumes)
