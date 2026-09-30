@@ -4,6 +4,12 @@ from app.core.config import get_settings
 from tests.factories import API, PASSWORD, register_and_login
 
 
+def test_root_page(client: TestClient) -> None:
+    body = client.get("/").json()
+    assert body["docs"] == "/docs"
+    assert body["name"] == get_settings().APP_NAME
+
+
 def test_health_and_ready(client: TestClient) -> None:
     health = client.get("/health").json()
     assert health["status"] == "ok"
@@ -164,6 +170,37 @@ def test_admin_endpoints_are_restricted(
     assert client.get(f"{API}/auth/me", headers=user_headers).status_code == 401
 
 
+def test_admin_can_create_accounts_when_registration_is_closed(
+    client: TestClient, admin_headers: dict[str, str], user_headers: dict[str, str], monkeypatch
+) -> None:  # type: ignore[no-untyped-def]
+    monkeypatch.setattr(get_settings(), "ALLOW_REGISTRATION", False)
+    payload = {"email": "Colleague@Example.com", "password": PASSWORD}
+    assert client.post(f"{API}/users", headers=user_headers, json=payload).status_code == 403
+    assert client.post(f"{API}/users", json=payload).status_code == 401
+    weak = client.post(f"{API}/users", headers=admin_headers, json={**payload, "password": "weak"})
+    assert weak.status_code == 422
+
+    created = client.post(f"{API}/users", headers=admin_headers, json=payload)
+    assert created.status_code == 201
+    assert created.json()["data"]["email"] == "colleague@example.com"
+    assert created.json()["data"]["is_superuser"] is False
+    duplicate = client.post(f"{API}/users", headers=admin_headers, json=payload)
+    assert duplicate.json()["error"]["code"] == "EMAIL_ALREADY_USED"
+
+    second_admin = client.post(
+        f"{API}/users", headers=admin_headers,
+        json={"email": "ops@example.com", "password": PASSWORD, "is_superuser": True},
+    )  # fmt: skip
+    assert second_admin.json()["data"]["is_superuser"] is True
+
+    login = client.post(
+        f"{API}/auth/login", json={"email": "colleague@example.com", "password": PASSWORD}
+    )
+    assert login.status_code == 200
+    logs = client.get(f"{API}/audit-logs?action=user.created", headers=admin_headers).json()
+    assert logs["data"]["pagination"]["total"] == 2
+
+
 def test_audit_log_records_logins(client: TestClient, admin_headers: dict[str, str]) -> None:
     logs = client.get(f"{API}/audit-logs?action=auth.", headers=admin_headers).json()["data"][
         "items"
@@ -190,3 +227,30 @@ def test_create_admin_script(client: TestClient, monkeypatch) -> None:  # type: 
 
     monkeypatch.setattr(sys, "stdin", io.StringIO("weak\n"))
     assert create_admin.main() == 1
+
+
+def test_create_user_script(client: TestClient, monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    import io
+    import sys
+
+    from scripts import create_user
+
+    def run(password: str, *args: str) -> int:
+        monkeypatch.setattr(sys, "stdin", io.StringIO(f"{password}\n"))
+        return create_user.main(["--email", "member@example.com", "--password-stdin", *args])
+
+    def me(password: str) -> dict:  # type: ignore[type-arg]
+        login = client.post(
+            f"{API}/auth/login", json={"email": "member@example.com", "password": password}
+        )
+        headers = {"Authorization": f"Bearer {login.json()['data']['access_token']}"}
+        return client.get(f"{API}/auth/me", headers=headers).json()["data"]  # type: ignore[no-any-return]
+
+    assert run("Sup3rPassw0rd!") == 0
+    assert me("Sup3rPassw0rd!")["is_superuser"] is False
+    # Compte existant : mot de passe remplacé, promotion avec --admin.
+    assert run("N3wPassw0rd!", "--admin") == 0
+    assert me("N3wPassw0rd!")["is_superuser"] is True
+    # Sans --admin, un administrateur n'est jamais rétrogradé.
+    assert run("N3wPassw0rd!") == 0
+    assert me("N3wPassw0rd!")["is_superuser"] is True

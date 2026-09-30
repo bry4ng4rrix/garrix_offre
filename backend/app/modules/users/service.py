@@ -5,9 +5,11 @@ from sqlalchemy.orm import Session
 
 from app.core.exceptions import BusinessRuleError, ConflictError, NotFoundError
 from app.core.security import hash_password, verify_password
+from app.modules.audit.service import AuditService
 from app.modules.users.models import User
 from app.modules.users.repository import UserRepository
-from app.modules.users.schemas import UserAdminUpdate
+from app.modules.users.schemas import UserAdminCreate, UserAdminUpdate
+from app.shared.enums import ActorType
 from app.shared.pagination import PaginationParams
 
 logger = logging.getLogger("app.auth")
@@ -20,16 +22,29 @@ class UserService:
         self.session = session
         self.users = UserRepository(session)
 
-    def create_user(self, email: str, password: str) -> User:
+    def create_user(self, email: str, password: str, is_superuser: bool | None = None) -> User:
+        """Crée un compte (sans commit).
+
+        `is_superuser=None` : le tout premier compte de l'instance devient administrateur.
+        """
         email = email.lower()
         if self.users.get_by_email(email):
             raise ConflictError("A user with this email already exists", code="EMAIL_ALREADY_USED")
-        # Le tout premier compte devient administrateur de l'instance.
-        is_first_user = self.users.count() == 0
+        if is_superuser is None:
+            is_superuser = self.users.count() == 0
         user = self.users.add(
-            User(email=email, hashed_password=hash_password(password), is_superuser=is_first_user)
+            User(email=email, hashed_password=hash_password(password), is_superuser=is_superuser)
         )
-        logger.info("User created", extra={"user_id": str(user.id), "superuser": is_first_user})
+        logger.info("User created", extra={"user_id": str(user.id), "superuser": is_superuser})
+        return user
+
+    def admin_create(self, data: UserAdminCreate, admin: User) -> User:
+        user = self.create_user(data.email, data.password, is_superuser=data.is_superuser)
+        AuditService(self.session).record(
+            "user.created", actor_type=ActorType.USER, actor_id=admin.id, entity_type="user",
+            entity_id=user.id, details={"superuser": data.is_superuser},
+        )  # fmt: skip
+        self.session.commit()
         return user
 
     def get_user(self, user_id: uuid.UUID) -> User:

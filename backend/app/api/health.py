@@ -27,6 +27,17 @@ def service_checks() -> dict[str, str]:
     }
 
 
+@router.get("/", summary="Accueil de l'API")
+def root() -> dict[str, str]:
+    settings = get_settings()
+    return {
+        "name": settings.APP_NAME,
+        "version": settings.APP_VERSION,
+        "docs": "/docs",
+        "health": "/health",
+    }
+
+
 @router.get("/health", summary="Liveness : l'API répond")
 def health() -> dict[str, object]:
     checks = service_checks()

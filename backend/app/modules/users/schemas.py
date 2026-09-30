@@ -27,6 +27,27 @@ class UserRead(ORMModel):
     last_login_at: datetime | None
 
 
+class UserAdminCreate(BaseModel):
+    """Création d'un compte par un administrateur (utile quand les inscriptions sont fermées)."""
+
+    email: EmailStr
+    password: str = Field(max_length=128)
+    is_superuser: bool = False
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {"email": "collegue@example.com", "password": "Passw0rd!", "is_superuser": False}
+            ]
+        }
+    )
+
+    @field_validator("password")
+    @classmethod
+    def check_strength(cls, value: str) -> str:
+        return validate_password_strength(value)
+
+
 class UserAdminUpdate(BaseModel):
     is_active: bool | None = None
     is_superuser: bool | None = None

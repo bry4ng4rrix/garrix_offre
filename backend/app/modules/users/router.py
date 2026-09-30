@@ -1,11 +1,11 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 
 from app.api.dependencies import CurrentUser, SuperUser
 from app.modules.users.dependencies import get_user_service
-from app.modules.users.schemas import PasswordChange, UserAdminUpdate, UserRead
+from app.modules.users.schemas import PasswordChange, UserAdminCreate, UserAdminUpdate, UserRead
 from app.modules.users.service import UserService
 from app.shared.pagination import Page, PaginationParams, build_page
 from app.shared.schemas import ApiResponse, MessageData, error_responses, message, ok
@@ -35,6 +35,19 @@ def change_password(payload: PasswordChange, user: CurrentUser, service: Service
 def list_users(_admin: SuperUser, service: Service, pagination: PaginationParams = Depends()):
     items, total = service.list_users(pagination)
     return ok(build_page(items, total, pagination))
+
+
+@router.post(
+    "",
+    response_model=ApiResponse[UserRead],
+    status_code=status.HTTP_201_CREATED,
+    summary="Créer un compte (admin)",
+    description="Permet à un administrateur de créer des comptes lorsque les inscriptions "
+    "publiques sont fermées (ALLOW_REGISTRATION=false). `is_superuser=true` crée un administrateur.",
+    responses=error_responses(401, 403, 409, 422),
+)
+def create_user(payload: UserAdminCreate, admin: SuperUser, service: Service):
+    return ok(service.admin_create(payload, admin))
 
 
 @router.patch(
